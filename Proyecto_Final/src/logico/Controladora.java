@@ -22,12 +22,12 @@ public class Controladora {
 	}
 
 
-	public static ArrayList<Equipos> getMisEquipos() {
+	public static ArrayList<Equipo> getMisEquipos() {
 		return misEquipos;
 	}
 
 
-	public static void setMisEquipos(ArrayList<Equipos> misEquipos) {
+	public static void setMisEquipos(ArrayList<Equipo> misEquipos) {
 		Controladora.misEquipos = misEquipos;
 	}
 
@@ -42,32 +42,32 @@ public class Controladora {
 	}
 
 
-	public static ArrayList<Jugadores> getMisJugadores() {
+	public static ArrayList<Jugador> getMisJugadores() {
 		return misJugadores;
 	}
 
 
-	public static void setMisJugadores(ArrayList<Jugadores> misJugadores) {
+	public static void setMisJugadores(ArrayList<Jugador> misJugadores) {
 		Controladora.misJugadores = misJugadores;
 	}
 
 
-	public static ArrayList<Estadisticas> getMisEstadisticas() {
+	public static ArrayList<Estadistica> getMisEstadisticas() {
 		return misEstadisticas;
 	}
 
 
-	public static void setMisEstadisticas(ArrayList<Estadisticas> misEstadisticas) {
+	public static void setMisEstadisticas(ArrayList<Estadistica> misEstadisticas) {
 		Controladora.misEstadisticas = misEstadisticas;
 	}
 
 
-	public static ArrayList<Juegos> getMisJuegos() {
+	public static ArrayList<Juego> getMisJuegos() {
 		return misJuegos;
 	}
 
 
-	public static void setMisJuegos(ArrayList<Juegos> misJuegos) {
+	public static void setMisJuegos(ArrayList<Juego> misJuegos) {
 		Controladora.misJuegos = misJuegos;
 	}
 
