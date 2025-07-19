@@ -4,81 +4,93 @@ import java.util.ArrayList;
 
 public class Controladora {
 
-	public static ArrayList<Equipo> misEquipos;
-	public static ArrayList<Ciudad> misCiudades;
-	public static ArrayList<Jugador> misJugadores;
-	public static ArrayList<Estadistica> misEstadisticas;
-	public static ArrayList<Juego> misJuegos;
-	public static ArrayList<EstadisticaJuego> misEstadisticaJuegos;
+	public ArrayList<Equipo> misEquipos;
+	public ArrayList<Ciudad> misCiudades;
+	public ArrayList<Jugador> misJugadores;
+	public ArrayList<Estadistica> misEstadisticas;
+	public ArrayList<Juego> misJuegos;
+	public ArrayList<EstadisticaJuego> misEstadisticaJuegos;
+	public static Controladora miControladora = null;
 	public static int codEquipo = 1;
 	public static int codCiudad = 1;
 	public static int codJugador = 1;
 	public static int codEstadistica = 1;
 	public static int codJuego = 1;
-	
-	
-	public static void main(String[] args) {
 
+	public Controladora() {
+		super();
+		this.misJugadores = new ArrayList<Jugador>();
+		this.misCiudades = new ArrayList<Ciudad>();
+		this.misEquipos = new ArrayList<Equipo>();
+		this.misEstadisticaJuegos = new ArrayList<EstadisticaJuego>();
+		this.misEstadisticas = new ArrayList<Estadistica>();
+		
 	}
 
+	 public static Controladora getInstance() {
+		if(miControladora == null) {
+			miControladora = new Controladora();
+		}
+		return null;
+	 }
 
-	public static ArrayList<Equipo> getMisEquipos() {
+	public ArrayList<Equipo> getMisEquipos() {
 		return misEquipos;
 	}
 
 
-	public static void setMisEquipos(ArrayList<Equipo> misEquipos) {
-		Controladora.misEquipos = misEquipos;
+	public void setMisEquipos(ArrayList<Equipo> misEquipos) {
+		this.misEquipos = misEquipos;
 	}
 
 
-	public static ArrayList<Ciudad> getMisCiudades() {
+	public ArrayList<Ciudad> getMisCiudades() {
 		return misCiudades;
 	}
 
 
-	public static void setMisCiudades(ArrayList<Ciudad> misCiudades) {
-		Controladora.misCiudades = misCiudades;
+	public void setMisCiudades(ArrayList<Ciudad> misCiudades) {
+		this.misCiudades = misCiudades;
 	}
 
 
-	public static ArrayList<Jugador> getMisJugadores() {
+	public ArrayList<Jugador> getMisJugadores() {
 		return misJugadores;
 	}
 
 
-	public static void setMisJugadores(ArrayList<Jugador> misJugadores) {
-		Controladora.misJugadores = misJugadores;
+	public void setMisJugadores(ArrayList<Jugador> misJugadores) {
+		this.misJugadores = misJugadores;
 	}
 
 
-	public static ArrayList<Estadistica> getMisEstadisticas() {
+	public ArrayList<Estadistica> getMisEstadisticas() {
 		return misEstadisticas;
 	}
 
 
-	public static void setMisEstadisticas(ArrayList<Estadistica> misEstadisticas) {
-		Controladora.misEstadisticas = misEstadisticas;
+	public void setMisEstadisticas(ArrayList<Estadistica> misEstadisticas) {
+		this.misEstadisticas = misEstadisticas;
 	}
 
 
-	public static ArrayList<Juego> getMisJuegos() {
+	public ArrayList<Juego> getMisJuegos() {
 		return misJuegos;
 	}
 
 
-	public static void setMisJuegos(ArrayList<Juego> misJuegos) {
-		Controladora.misJuegos = misJuegos;
+	public void setMisJuegos(ArrayList<Juego> misJuegos) {
+		this.misJuegos = misJuegos;
 	}
 
 
-	public static ArrayList<EstadisticaJuego> getMisEstadisticaJuegos() {
+	public ArrayList<EstadisticaJuego> getMisEstadisticaJuegos() {
 		return misEstadisticaJuegos;
 	}
 
 
-	public static void setMisEstadisticaJuegos(ArrayList<EstadisticaJuego> misEstadisticaJuegos) {
-		Controladora.misEstadisticaJuegos = misEstadisticaJuegos;
+	public void setMisEstadisticaJuegos(ArrayList<EstadisticaJuego> misEstadisticaJuegos) {
+		this.misEstadisticaJuegos = misEstadisticaJuegos;
 	}
 
 
@@ -127,7 +139,7 @@ public class Controladora {
 	}
 	
 	public void insertarEstadistica(Estadistica estadistica) {
-		misestadisticas.add(estadistica);
+		misEstadisticas.add(estadistica);
 		codEstadistica++;
 	}
 	
@@ -153,7 +165,7 @@ public class Controladora {
 		
 	}
 	public void updateEstadistica(Estadistica estadistica, int ind) {
-		misEstadisticas.set(ind, stadistica);
+		misEstadisticas.set(ind, estadistica);
 		
 		
 	}
@@ -162,27 +174,27 @@ public class Controladora {
 		
 		
 	}
-	public void deleteEquipo (String codEquipo) {
+	public void deleteEquipo (int codEquipo) {
 		Equipo equipo = searchEquipoByCod(codEquipo);
 		misEquipos.remove(equipo);
 	}
 	
-	public void deleteCiudad (String codCiudad) {
-		ciudad ciudad = searchCiudadByCod(codCiudad);
+	public void deleteCiudad (int codCiudad) {
+		Ciudad ciudad = searchCiudadByCod(codCiudad);
 		misCiudades.remove(ciudad);
 	}
 	
-	public void deleteJugador (String codJugador) {
+	public void deleteJugador (int codJugador) {
 		Jugador jugador = searchJugadorByCod(codJugador);
 		misJugadores.remove(jugador);
 	}
 	
-	public void deleteEstadistica (String codEstadistica) {
+	public void deleteEstadistica (int codEstadistica) {
 		Estadistica estadistica = searchEstadisticaByCod(codEstadistica);
 		misEstadisticas.remove(estadistica);
 	}
 	
-	public void deleteJuego (String codJuego) {
+	public void deleteJuego (int codJuego) {
 		Juego juego = searchJuegoByCod(codJuego);
 		misJuegos.remove(juego);
 	}
@@ -193,7 +205,7 @@ public class Controladora {
 	        int i = 0;
 
 	        while (!encontrado && i < misEquipos.size()) {
-	            if (misEquipos.get(i).getCodEquipo() == codEquipo) {
+	            if (misEquipos.get(i).getIdEquipo() == codEquipo) {
 	                equipo = misEquipos.get(i);
 	                encontrado = true;
 	            }
@@ -208,7 +220,7 @@ public class Controladora {
 	        int i = 0;
 
 	        while (!encontrado && i < misJugadores.size()) {
-	            if (misJugadores.get(i).getCodJugador() == codJugador) {
+	            if (misJugadores.get(i).getIdJugador() == codJugador) {
 	                encontrado = true;
 	                jugador = misJugadores.get(i);
 	            }
@@ -223,7 +235,7 @@ public class Controladora {
 	        int i = 0;
 
 	        while (!encontrado && i < misJuegos.size()) {
-	            if (misJuegos.get(i).getCodJuego() == codJuego) {
+	            if (misJuegos.get(i).getIdJuego() == codJuego) {
 	                encontrado = true;
 	                juego = misJuegos.get(i);
 	            }
@@ -253,7 +265,7 @@ public class Controladora {
 	        int i = 0;
 
 	        while (!encontrado && i < misEstadisticas.size()) {
-	            if (misEstadisticas.get(i).getCodEstadistica() == codEstadistica) {
+	            if (misEstadisticas.get(i).getIdEstadistica() == codEstadistica) {
 	                encontrado = true;
 	                estadistica = misEstadisticas.get(i);
 	            }
@@ -261,5 +273,7 @@ public class Controladora {
 	        }
 	        return estadistica;
 	    }
+
+
 	
 }
