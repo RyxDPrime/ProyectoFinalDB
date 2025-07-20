@@ -21,18 +21,24 @@ import logico.Controladora;
 import logico.Equipo;
 import logico.Jugador;
 import logico.RoundedBorder;
-import logico.Tienda;
+import server.SQLConnection;
 
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.net.HttpRetryException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.AbstractListModel;
 import javax.swing.JComboBox;
 import javax.swing.DefaultComboBoxModel;
@@ -45,7 +51,6 @@ public class ListJugadores extends JDialog {
 	private final JPanel contentPanel = new JPanel();
 	private static Object row[];
 	private DefaultTableModel model;
-	private String cod = "";
 	private int NumJugador;
 	
 	private static final Color PrimaryC = new Color(3, 88, 157);
@@ -87,8 +92,8 @@ public class ListJugadores extends JDialog {
 	 * Create the dialog.
 	 */
 	public ListJugadores() {
-		setTitle("Lista de Jugadores");
-		setBounds(100, 100, 1349, 751);
+		setUndecorated(true);
+		setBounds(100, 100, 1349, 704);
 		getContentPane().setLayout(new BorderLayout());
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 		getContentPane().add(contentPanel, BorderLayout.CENTER);
@@ -96,7 +101,7 @@ public class ListJugadores extends JDialog {
 		
 		
 		scrollPane = new JScrollPane();
-		scrollPane.setBounds(0, 0, 1116, 685);
+		scrollPane.setBounds(0, 0, 1116, 704);
 		contentPanel.add(scrollPane);
 
 		model = new DefaultTableModel();
@@ -107,6 +112,8 @@ public class ListJugadores extends JDialog {
 				int ind = table.getSelectedRow();
 				if (ind >= 0) {
 					NumJugador = (int) table.getValueAt(ind, 0);
+					updateBtn.setEnabled(true);
+					deleteBtn.setEnabled(true);
 					
 				}
 			}
@@ -163,13 +170,15 @@ public class ListJugadores extends JDialog {
 		searchbtn.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseEntered(MouseEvent e) {
-				searchbtn.setBorder(new RoundedBorder(HoverEffectColor, 1, 20));
-				searchbtn.setForeground(HoverEffectColor);
+				searchbtn.setBorder(new RoundedBorder(new Color(66, 133, 244) , 1, 20));
+				searchbtn.setBackground(new Color(66, 133, 244));
+				searchbtn.setForeground(Color.white);
 				searchbtn.setOpaque(true);
 			}
 			@Override
 			public void mouseExited(MouseEvent e) {
 				searchbtn.setBorder(new RoundedBorder(SecondaryC, 1, 20));
+				searchbtn.setBackground(Color.white);
 				searchbtn.setForeground(SecondaryC);
 				searchbtn.setOpaque(true);
 			}
@@ -202,12 +211,14 @@ public class ListJugadores extends JDialog {
 		returnbtn.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseEntered(MouseEvent e) {
-				returnbtn.setBorder(new RoundedBorder(HoverEffectColor, 1, 20));
-				returnbtn.setForeground(HoverEffectColor);
+				returnbtn.setBorder(new RoundedBorder(new Color(189, 189, 189), 1, 20));
+				returnbtn.setBackground(new Color(189, 189, 189));
+				returnbtn.setForeground(Color.black);
 			}
 			@Override
 			public void mouseExited(MouseEvent e) {
 				returnbtn.setBorder(new RoundedBorder(SecondaryC, 1, 20));
+				returnbtn.setBackground(new Color(248, 248, 248));
 				returnbtn.setForeground(SecondaryC);
 			}
 		});
@@ -221,19 +232,59 @@ public class ListJugadores extends JDialog {
 		
 		deleteBtn = new JButton("Eliminar");
 		deleteBtn.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				//Logica de eliminar aqui, buscando e eliminando del arraylist de la controladora
-			}
+			 public void actionPerformed(ActionEvent e) {
+			        if(NumJugador != 0) {
+			            int option = JOptionPane.showConfirmDialog(null, 
+			                "¿Está seguro de eliminar este jugador?", 
+			                "Confirmar Eliminación", 
+			                JOptionPane.YES_NO_OPTION);
+			            
+			            if(option == JOptionPane.YES_OPTION) {
+			                try (Connection connection = SQLConnection.getConnection();
+			                     PreparedStatement stmt = connection.prepareStatement(
+			                         "DELETE FROM Jugador WHERE Numero_Jugador = ?")) {
+			                    
+			                    stmt.setInt(1, NumJugador);
+			                    int rowsAffected = stmt.executeUpdate();
+			                    
+			                    if(rowsAffected > 0) {
+			                        JOptionPane.showMessageDialog(null, 
+			                            "Jugador eliminado correctamente", 
+			                            "Éxito", 
+			                            JOptionPane.INFORMATION_MESSAGE);
+			                        loadJugadores(); // Actualizar la tabla
+			                        updateBtn.setEnabled(false);
+			                        deleteBtn.setEnabled(false);
+			                    } else {
+			                        JOptionPane.showMessageDialog(null, 
+			                            "No se encontró el jugador", 
+			                            "Error", 
+			                            JOptionPane.ERROR_MESSAGE);
+			                    }
+			                } catch (SQLException ex) {
+			                    JOptionPane.showMessageDialog(null, 
+			                        "Error al eliminar jugador: " + ex.getMessage(), 
+			                        "Error", 
+			                        JOptionPane.ERROR_MESSAGE);
+			                    ex.printStackTrace();
+			                }
+			            }
+			        }
+			    }
 		});
 		deleteBtn.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseEntered(MouseEvent e) {
-				deleteBtn.setBorder(new RoundedBorder(HoverEffectColor, 1, 20));
-				deleteBtn.setForeground(HoverEffectColor);
+				if(deleteBtn.isEnabled()) {
+					deleteBtn.setBackground(new Color(167, 34, 34));
+					deleteBtn.setForeground(Color.white);
+					deleteBtn.setBorder(new RoundedBorder(new Color(167, 34, 34), 1, 20));
+				}
 			}
 			@Override
 			public void mouseExited(MouseEvent e) {
 				deleteBtn.setBorder(new RoundedBorder(SecondaryC, 1, 20));
+				deleteBtn.setBackground(new Color(248, 248, 248));
 				deleteBtn.setForeground(SecondaryC);
 			}
 		});
@@ -249,20 +300,23 @@ public class ListJugadores extends JDialog {
 		updateBtn = new JButton("Actualizar");
 		updateBtn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				//Logica para la update de informaciones
+				
 			}
 		});
 		updateBtn.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseEntered(MouseEvent e) {
-				updateBtn.setBorder(new RoundedBorder(HoverEffectColor, 1, 20));
-				updateBtn.setForeground(HoverEffectColor);
+				if(updateBtn.isEnabled()) {
+					updateBtn.setBorder(new RoundedBorder(new Color(255, 183, 77), 1, 20));
+					updateBtn.setBackground(new Color(255, 183, 77));
+					updateBtn.setForeground(Color.white);
+				}
 			}
 			@Override
 			public void mouseExited(MouseEvent e) {
 				updateBtn.setBorder(new RoundedBorder(SecondaryC, 1, 20));
 				updateBtn.setForeground(SecondaryC);
-			}
+				updateBtn.setBackground(new Color(248, 248, 248));			}
 		});
 		updateBtn.setBorder(new RoundedBorder(SecondaryC, 1, 20));
 		updateBtn.setForeground(SecondaryC);
@@ -273,34 +327,106 @@ public class ListJugadores extends JDialog {
 		updateBtn.setBounds(22, 556, 169, 40);
 		panel.add(updateBtn);
 		
+		loadEquiposComboBox();
 		loadJugadores();
 	}
 	
-	public void loadJugadores(){
-		Controladora controladora = Controladora.getInstance();
-		ArrayList<Jugador> aux = controladora.getMisJugadores();
-		model.setRowCount(0);
-		row = new Object[table.getColumnCount()];
-		Ciudad ciudad = null;
-		Equipo equipo = null;
-		int idCiudad;
-		int idEquipo;
-		for(Jugador jugador : aux) {
-			idCiudad = jugador.getIdCiudad();
-			idEquipo = jugador.getIdEquipo();
-			
-			ciudad = controladora.searchCiudadByCod(idCiudad);
-			equipo = controladora.searchEquipoByCod(idEquipo);
-			
-			row[0] = jugador.getNumeroJugador();
-			row[1] = jugador.getNombre();
-			row[2] = ciudad.getNombre();
-			row[3] = equipo.getIdEquipo();
-			row[4] = jugador.getFechaNacimiento();
-			
-		}
-		
-		updateBtn.setEnabled(false);
-		deleteBtn.setEnabled(false);
+	public void loadJugadores() {
+	    model.setRowCount(0); // Limpiar tabla
+	    
+	    try (Connection connection = SQLConnection.getConnection();
+	         Statement stmt = connection.createStatement();
+	         ResultSet rs = stmt.executeQuery(
+	             "SELECT j.Numero_Jugador, j.Nombre, c.Nombre_Ciudad as Ciudad, " +
+	             "e.Nombre_Equipo as Equipo, j.Fecha_Nacimiento " +
+	             "FROM Jugador j " +
+	             "LEFT JOIN Ciudad c ON j.IdCiudad = c.IdCiudad " +
+	             "LEFT JOIN Equipo e ON j.IdEquipo = e.IdEquipo")) {
+	        
+	        while (rs.next()) {
+	            Object[] row = {
+	                rs.getInt("Numero_Jugador"),
+	                rs.getString("Nombre"),
+	                rs.getString("Ciudad"),
+	                rs.getString("Equipo"),
+	                formatFecha(rs.getDate("Fecha_Nacimiento")) // Formatear la fecha aquí
+	            };
+	            model.addRow(row);
+	        }
+	    } catch (SQLException e) {
+	        JOptionPane.showMessageDialog(this, 
+	            "Error al cargar jugadores: " + e.getMessage(),
+	            "Error", JOptionPane.ERROR_MESSAGE);
+	        e.printStackTrace();
+	    }
+	}
+	
+	private void loadEquiposComboBox() {
+	    teamcombo.removeAllItems();
+	    teamcombo.addItem("<Todos>"); // Opción por defecto
+	    
+	    try (Connection connection = SQLConnection.getConnection();
+	         Statement stmt = connection.createStatement();
+	         ResultSet rs = stmt.executeQuery("SELECT DISTINCT Nombre_Equipo FROM Equipo ORDER BY Nombre_Equipo")) {
+	        
+	        while (rs.next()) {
+	            teamcombo.addItem(rs.getString("Nombre_Equipo"));
+	        }
+	    } catch (SQLException e) {
+	        JOptionPane.showMessageDialog(this, 
+	            "Error al cargar equipos: " + e.getMessage(),
+	            "Error", JOptionPane.ERROR_MESSAGE);
+	    }
+	    
+	    // Agregar el listener para filtrar automáticamente
+	    teamcombo.addActionListener(e -> filtrarPorEquipo());
+	}
+	
+	private void filtrarPorEquipo() {
+	    String equipoSeleccionado = (String) teamcombo.getSelectedItem();
+	    
+	    if (equipoSeleccionado == null || equipoSeleccionado.equals("<Todos>")) {
+	        loadJugadores(); // Esto ahora cargará todos los jugadores correctamente
+	        return;
+	    }
+	    
+	    try (Connection connection = SQLConnection.getConnection();
+	         PreparedStatement stmt = connection.prepareStatement(
+	             "SELECT j.Numero_Jugador, j.Nombre, c.Nombre_Ciudad as Ciudad, " +
+	             "e.Nombre_Equipo as Equipo, j.Fecha_Nacimiento " +
+	             "FROM Jugador j " +
+	             "LEFT JOIN Ciudad c ON j.IdCiudad = c.IdCiudad " +
+	             "LEFT JOIN Equipo e ON j.IdEquipo = e.IdEquipo " +
+	             "WHERE e.Nombre_Equipo = ?")) {
+	        
+	        stmt.setString(1, equipoSeleccionado);
+	        ResultSet rs = stmt.executeQuery();
+	        
+	        model.setRowCount(0); // Limpiar tabla
+	        
+	        while (rs.next()) {
+	            Object[] row = {
+	                rs.getInt("Numero_Jugador"),
+	                rs.getString("Nombre"),
+	                rs.getString("Ciudad"),
+	                rs.getString("Equipo"),
+	                formatFecha(rs.getDate("Fecha_Nacimiento")) // Formatear la fecha aquí
+	            };
+	            model.addRow(row);
+	        }
+	    } catch (SQLException e) {
+	        JOptionPane.showMessageDialog(this, 
+	            "Error al filtrar jugadores: " + e.getMessage(),
+	            "Error", JOptionPane.ERROR_MESSAGE);
+	        e.printStackTrace();
+	    }
+	}
+	
+	private String formatFecha(java.sql.Date fecha) {
+	    if (fecha == null) {
+	        return "";
+	    }
+	    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
+	    return sdf.format(fecha);
 	}
 }

@@ -336,6 +336,13 @@ public class Principal extends JFrame {
 		PanelPrincipal.add(Juegobttn);
 		
 		regJugadobttn = new JButton("Reg. Jugador");
+		regJugadobttn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				RegJugador regJugador = new RegJugador();
+				regJugador.setModal(true);
+				regJugador.setVisible(true);
+			}
+		});
 		regJugadobttn.setBounds(10, 0, 320, 76);
 		regJugadobttn.setBackground(ButtonColor);
 		regJugadobttn.setForeground(Color.WHITE);
@@ -358,6 +365,13 @@ public class Principal extends JFrame {
 			}
 		});
 		listarJugadoresbttn = new JButton("List. Jugador");
+		listarJugadoresbttn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				ListJugadores listJugadores = new ListJugadores();
+				listJugadores.setVisible(true);
+				listJugadores.setModal(true);
+			}
+		});
 		listarJugadoresbttn.setBounds(10, 76, 320, 76);
 		listarJugadoresbttn.setBackground(ButtonColor);
 		listarJugadoresbttn.setForeground(Color.WHITE);
@@ -450,6 +464,13 @@ public class Principal extends JFrame {
 		});
 		
 		btnListCiudad = new JButton("List. Ciudad");
+		btnListCiudad.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				ListCiudad listCiudad = new ListCiudad();
+				listCiudad.setModal(true);
+				listCiudad.setVisible(true);
+			}
+		});
 		btnListCiudad.setBounds(10, 76, 326, 76);
 		btnListCiudad.setBackground(ButtonColor);
 		btnListCiudad.setForeground(Color.WHITE);
