@@ -395,6 +395,11 @@ public class Principal extends JFrame {
 		});
 		
 		regEquipobttn = new JButton("Reg. Equipo");
+		regEquipobttn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				
+			}
+		});
 		regEquipobttn.setBounds(10, 0, 320, 76);
 		regEquipobttn.setBackground(ButtonColor);
 		regEquipobttn.setForeground(Color.WHITE);
@@ -418,6 +423,13 @@ public class Principal extends JFrame {
 		});
 		
 		btnListEquipo = new JButton("List. Equipo");
+		btnListEquipo.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				ListEquipo listaEquipo = new ListEquipo();
+				listaEquipo.setModal(true);
+				listaEquipo.setVisible(true);
+			}
+		});
 		btnListEquipo.setBounds(10, 76, 320, 76);
 		btnListEquipo.setBackground(ButtonColor);
 		btnListEquipo.setForeground(Color.WHITE);
@@ -515,6 +527,13 @@ public class Principal extends JFrame {
 		});
 		
 		listaEstadisticabttn = new JButton("List. Estadistica");
+		listaEstadisticabttn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				ListEstadisticas lista = new ListEstadisticas();
+				lista.setModal(true);
+				lista.setVisible(true);
+			}
+		});
 		listaEstadisticabttn.setBounds(10, 76, 326, 76);
 		listaEstadisticabttn.setBackground(ButtonColor);
 		listaEstadisticabttn.setForeground(Color.WHITE);
@@ -537,6 +556,13 @@ public class Principal extends JFrame {
 		});
 		
 		RegJuegobttn = new JButton("Reg. Juego");
+		RegJuegobttn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				RegJuego registro = new RegJuego();
+				registro.setModal(true);
+				registro.setVisible(true);
+			}
+		});
 		RegJuegobttn.setBounds(10, 0, 326, 76);
 		RegJuegobttn.setBackground(ButtonColor);
 		RegJuegobttn.setForeground(Color.WHITE);
@@ -559,6 +585,13 @@ public class Principal extends JFrame {
 		});
 		
 		listJuegobttn = new JButton("List. Juego");
+		listJuegobttn.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				ListJuego listaJuego = new ListJuego();
+				listaJuego.setModal(true);
+				listaJuego.setVisible(true);
+			}
+		});
 		listJuegobttn.setBounds(10, 76, 326, 76);
 		listJuegobttn.setBackground(ButtonColor);
 		listJuegobttn.setForeground(Color.WHITE);

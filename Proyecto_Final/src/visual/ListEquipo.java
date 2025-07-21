@@ -101,7 +101,7 @@ public class ListEquipo extends JDialog {
 			});
 			table.setFont(new Font("Century Gothic", Font.PLAIN, 14));
 			table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-			String[] header = {"Equipo, Ciudad"};
+			String[] header = {"Equipo", "Ciudad"};
 			model.setColumnIdentifiers(header);
 			table.setModel(model);
 			scrollPane.setViewportView(table);
@@ -109,11 +109,6 @@ public class ListEquipo extends JDialog {
 			table.getTableHeader().setPreferredSize(new Dimension(10, 40));
 			table.getTableHeader().setBackground(PrimaryC);
 			table.getTableHeader().setForeground(Color.WHITE);
-			
-			table.getColumnModel().getColumn(0).setPreferredWidth(25);
-			table.getColumnModel().getColumn(1).setPreferredWidth(75);
-			table.getColumnModel().getColumn(2).setPreferredWidth(50);
-			table.getColumnModel().getColumn(3).setPreferredWidth(25);
 			
 			table.setFont(new Font("Century Gothic", Font.PLAIN, 16));
 			table.getTableHeader().setFont(new Font("Century Gothic", Font.BOLD, 18));
