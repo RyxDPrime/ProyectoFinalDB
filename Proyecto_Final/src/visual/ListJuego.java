@@ -93,7 +93,6 @@ public class ListJuego extends JDialog {
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 		getContentPane().add(contentPanel, BorderLayout.CENTER);
 		contentPanel.setLayout(null);
-
 		scrollPane = new JScrollPane();
 		scrollPane.setBounds(0, 0, 1116, 704);
 		contentPanel.add(scrollPane);

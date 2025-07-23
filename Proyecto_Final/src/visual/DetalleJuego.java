@@ -86,6 +86,7 @@ public class DetalleJuego extends JDialog {
 	}
 
 	public DetalleJuego(int juegoId) {
+		setModal(true);
 		this.juegoId = juegoId;
 		setUndecorated(true);
 		setBounds(100, 100, 1331, 704);
