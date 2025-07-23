@@ -764,8 +764,6 @@ public class ListEquipo extends JDialog {
 		loadEquipos();
 	}
 
-//Añade este método a la clase ListEquipo
-
 	/**
 	 * Verifica si una ciudad con el ID dado existe en la base de datos
 	 */
@@ -774,9 +772,12 @@ public class ListEquipo extends JDialog {
 			SQLConnection dbConnection = new SQLConnection();
 			Connection connection = dbConnection.getConnection();
 
+			// Formatear el ID con cero a la izquierda
+			String idCiudadFormatted = String.format("%02d", idCiudad);
+
 			String query = "SELECT COUNT(*) FROM Ciudad WHERE IdCiudad = ?";
 			PreparedStatement stmt = connection.prepareStatement(query);
-			stmt.setInt(1, idCiudad);
+			stmt.setString(1, idCiudadFormatted); // Usar String formateado
 
 			java.sql.ResultSet rs = stmt.executeQuery();
 

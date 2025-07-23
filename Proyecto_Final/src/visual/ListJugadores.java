@@ -240,6 +240,39 @@ public class ListJugadores extends JDialog {
 			                String nombreJugador = (String) table.getValueAt(selectedRow, 1);
 			                String equipoJugador = (String) table.getValueAt(selectedRow, 3);
 			                
+			                // NUEVA VALIDACIÓN: Verificar si tiene estadísticas registradas
+			                try {
+			                    int idJugador = obtenerIdJugadorPorNumero(NumJugador);
+			                    if (idJugador == -1) {
+			                        JOptionPane.showMessageDialog(null, 
+			                            "No se pudo encontrar el jugador", 
+			                            "Error", 
+			                            JOptionPane.ERROR_MESSAGE);
+			                        return;
+			                    }
+			                    
+			                    // Verificar si tiene estadísticas en Estadistica_Juego
+			                    if (jugadorTieneEstadisticas(idJugador)) {
+			                        JOptionPane.showMessageDialog(null, 
+			                            "No se puede eliminar el jugador porque tiene estadísticas registradas en juegos.\n\n" +
+			                            "Jugador: " + nombreJugador + "\n" +
+			                            "Equipo: " + equipoJugador + "\n" +
+			                            "Número: " + NumJugador + "\n\n" +
+			                            "Para eliminar este jugador, primero debe eliminar sus estadísticas de los juegos correspondientes.", 
+			                            "No se puede eliminar", 
+			                            JOptionPane.WARNING_MESSAGE);
+			                        return;
+			                    }
+			                    
+			                } catch (SQLException ex) {
+			                    JOptionPane.showMessageDialog(null, 
+			                        "Error al verificar estadísticas del jugador: " + ex.getMessage(), 
+			                        "Error", 
+			                        JOptionPane.ERROR_MESSAGE);
+			                    ex.printStackTrace();
+			                    return;
+			                }
+			                
 			                int option = JOptionPane.showConfirmDialog(null, 
 			                    "¿Está seguro de eliminar al jugador?\n\n" +
 			                    "Nombre: " + nombreJugador + "\n" +
@@ -253,7 +286,7 @@ public class ListJugadores extends JDialog {
 			                if(option == JOptionPane.YES_OPTION) {
 			                    try (Connection connection = SQLConnection.getConnection();
 			                         PreparedStatement stmt = connection.prepareStatement(
-			                             "DELETE FROM Jugadores WHERE Numero_Jugador = ?")) {
+			                             "DELETE FROM Jugador WHERE Numero_Jugador = ?")) {
 			                        
 			                        stmt.setInt(1, NumJugador);
 			                        int rowsAffected = stmt.executeUpdate();
@@ -495,6 +528,43 @@ public class ListJugadores extends JDialog {
 	    }
 	}
 	
+	/**
+	 * Obtiene el ID del jugador basado en su número
+	 */
+	private int obtenerIdJugadorPorNumero(int numeroJugador) throws SQLException {
+	    try (Connection connection = SQLConnection.getConnection();
+	         PreparedStatement stmt = connection.prepareStatement(
+	             "SELECT idJugador FROM Jugador WHERE Numero_Jugador = ?")) {
+	        
+	        stmt.setInt(1, numeroJugador);
+	        ResultSet rs = stmt.executeQuery();
+	        
+	        if (rs.next()) {
+	            return rs.getInt("idJugador");
+	        }
+	    }
+	    return -1; // No encontrado
+	}
+
+	/**
+	 * Verifica si el jugador tiene estadísticas registradas en la tabla Estadistica_Juego
+	 */
+	private boolean jugadorTieneEstadisticas(int idJugador) throws SQLException {
+	    try (Connection connection = SQLConnection.getConnection();
+	         PreparedStatement stmt = connection.prepareStatement(
+	             "SELECT COUNT(*) FROM [Estadistica de Juego]\r\n"
+	             + " WHERE IdJugador = ?")) {
+	        
+	        stmt.setInt(1, idJugador);
+	        ResultSet rs = stmt.executeQuery();
+	        
+	        if (rs.next()) {
+	            return rs.getInt(1) > 0; // Retorna true si tiene estadísticas
+	        }
+	    }
+	    return false;
+	}
+
 	private String formatFecha(java.sql.Date fecha) {
 	    if (fecha == null) {
 	        return "";
