@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Component;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -27,6 +28,18 @@ import java.awt.event.MouseEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.JOptionPane;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import server.SQLConnection;
+import logico.Ciudad;
+import logico.Controladora;
+import logico.Equipo;
+import logico.Jugador;
 
 public class RegJugador extends JDialog {
 
@@ -45,6 +58,9 @@ public class RegJugador extends JDialog {
 	private JLabel birthdaylabel;
 	private JButton regbtn;
 	private JButton returnbtn;
+	private boolean modoActualizacion = false;
+    private int jugadorIdActual = 0;
+    private JSpinner spinner;
 
 	/**
 	 * Launch the application.
@@ -137,10 +153,10 @@ public class RegJugador extends JDialog {
 			birthdaylabel.setBounds(15, 227, 192, 20);
 			panel.add(birthdaylabel);
 			
-			JSpinner spinner = new JSpinner();
+			spinner = new JSpinner();
 			spinner.setFont(new Font("century Gothic", Font.BOLD, 16));
 			spinner.setModel(new SpinnerDateModel(new Date(1752253020000L), null, null, Calendar.DAY_OF_MONTH));
-			JSpinner.DateEditor dateEditor = new DateEditor(spinner, "dd/MM/yyyy");
+			DateEditor dateEditor = new DateEditor(spinner, "dd/MM/yyyy");
 			spinner.setEditor(dateEditor);
 			spinner.setBounds(133, 226, 113, 26);
 			panel.add(spinner);
@@ -148,7 +164,7 @@ public class RegJugador extends JDialog {
 			regbtn = new JButton("Registrar");
 			regbtn.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					//Logica para guardar los datos, buscar si hay una funcion de buscar equipo y ciudad por nombre para tener los id
+					registrarOActualizarJugador();
 				}
 			});
 			regbtn.addMouseListener(new MouseAdapter() {
@@ -199,5 +215,415 @@ public class RegJugador extends JDialog {
 			returnbtn.setBounds(300, 280, 130, 40);
 			panel.add(returnbtn);
 		}
+		SwingUtilities.invokeLater(() -> cargarDatosComboBoxes());
 	}
+	
+	public void configurarModoActualizacion(int idJugador, String nombre, String ciudad, 
+                                      java.util.Date fechaNacimiento, int Numero_Jugador, String equipo) {
+    this.modoActualizacion = true;
+    this.jugadorIdActual = idJugador;
+    
+    // Recargar ComboBoxes para asegurar datos actualizados
+    cargarDatosComboBoxes();
+    
+    // Cambiar título de la ventana
+    Component[] components = getContentPane().getComponents();
+    buscarYCambiarTitulo(components, "Actualizar Jugador");
+    
+    // Cargar los datos en los campos
+    nametxt.setText(nombre != null ? nombre : "");
+    numtxt.setText(String.valueOf(Numero_Jugador));
+    
+    // Configurar fecha
+    if (fechaNacimiento != null) {
+        spinner.setValue(fechaNacimiento);
+    }
+    
+    // Seleccionar ciudad en ComboBox
+    if (ciudad != null && !ciudad.trim().isEmpty()) {
+        boolean ciudadEncontrada = false;
+        for (int i = 0; i < citycb.getItemCount(); i++) {
+            String itemCiudad = citycb.getItemAt(i).toString().trim();
+            if (itemCiudad.equalsIgnoreCase(ciudad.trim())) {
+                citycb.setSelectedIndex(i);
+                ciudadEncontrada = true;
+                break;
+            }
+        }
+        if (!ciudadEncontrada) {
+            System.out.println("Ciudad no encontrada en ComboBox: '" + ciudad + "'");
+        }
+    }
+    
+    // Seleccionar equipo en ComboBox
+    if (equipo != null && !equipo.trim().isEmpty()) {
+        boolean equipoEncontrado = false;
+        for (int i = 0; i < teamcb.getItemCount(); i++) {
+            String itemEquipo = teamcb.getItemAt(i).toString().trim();
+            if (itemEquipo.equalsIgnoreCase(equipo.trim())) {
+                teamcb.setSelectedIndex(i);
+                equipoEncontrado = true;
+                break;
+            }
+        }
+        if (!equipoEncontrado) {
+            System.out.println("Equipo no encontrado en ComboBox: '" + equipo + "'");
+        }
+    }
+    
+    // DESHABILITAR los ComboBox en modo actualización
+    citycb.setEnabled(false);
+    teamcb.setEnabled(false);
+    
+    // Cambiar texto del botón registrar a "Guardar"
+    regbtn.setText("Guardar");
+    
+    System.out.println("Modo actualización configurado para jugador ID: " + idJugador);
+    System.out.println("Datos cargados - Nombre: " + nombre + ", Ciudad: " + ciudad + ", Equipo: " + equipo);
+    System.out.println("ComboBoxes deshabilitados para actualización");
+}
+    
+    private void buscarYCambiarTitulo(Component[] components, String nuevoTitulo) {
+        for (Component comp : components) {
+            if (comp instanceof JPanel) {
+                buscarYCambiarTitulo(((JPanel) comp).getComponents(), nuevoTitulo);
+            } else if (comp instanceof JLabel) {
+                JLabel label = (JLabel) comp;
+                if (label.getText().contains("Registrar")) {
+                    label.setText(nuevoTitulo);
+                    break;
+                }
+            }
+        }
+    }
+    
+    private void buscarYCambiarBoton(Component[] components, String nuevoTexto) {
+        for (Component comp : components) {
+            if (comp instanceof JPanel) {
+                buscarYCambiarBoton(((JPanel) comp).getComponents(), nuevoTexto);
+            } else if (comp instanceof JButton) {
+                JButton button = (JButton) comp;
+                if (button.getText().equals("Registrar")) {
+                    button.setText(nuevoTexto);
+                    break;
+                }
+            }
+        }
+    }
+    
+    private void registrarOActualizarJugador() {
+    try {
+        // Obtener y validar los datos del formulario
+        String nombre = nametxt.getText().trim();
+        String numeroText = numtxt.getText().trim();
+        Date fechaNacimiento = (Date) spinner.getValue();
+        
+        // Validaciones básicas
+        if (nombre.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Debe ingresar el nombre del jugador", 
+                "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        if (numeroText.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Debe ingresar el número del jugador", 
+                "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        int Numero_Jugador;
+        try {
+            Numero_Jugador = Integer.parseInt(numeroText);
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "El número debe ser un valor numérico válido", 
+                "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        if (modoActualizacion) {
+            // Modo actualización - solo actualizar nombre, número y fecha
+            actualizarJugadorSoloBasicos(jugadorIdActual, nombre, fechaNacimiento, Numero_Jugador);
+        } else {
+            // Modo registro - validar ciudad y equipo
+            String ciudadSeleccionada = (String) citycb.getSelectedItem();
+            String equipoSeleccionado = (String) teamcb.getSelectedItem();
+            
+            if (ciudadSeleccionada == null || ciudadSeleccionada.equals("<Seleccione>")) {
+                JOptionPane.showMessageDialog(this, "Debe seleccionar una ciudad", 
+                    "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            if (equipoSeleccionado == null || equipoSeleccionado.equals("<Seleccione>")) {
+                JOptionPane.showMessageDialog(this, "Debe seleccionar un equipo", 
+                    "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            Controladora controladora = Controladora.getInstance();
+            controladora.cargarCiudadesFromDB();
+            controladora.cargarEquiposFromDB();
+            
+            Ciudad ciudad = controladora.searchCiudadByNombre(ciudadSeleccionada);
+            Equipo equipo = controladora.searchEquipoByNombre(equipoSeleccionado);
+            
+            // Buscar directamente en la base de datos
+            int idCiudad = ciudad.getCodCiudad();
+            int idEquipo = equipo.getIdEquipo();
+           
+            registrarNuevoJugador(nombre, idCiudad, fechaNacimiento, Numero_Jugador, idEquipo);
+        }
+        
+    } catch (Exception ex) {
+        JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), 
+            "Error", JOptionPane.ERROR_MESSAGE);
+        ex.printStackTrace();
+    }
+}
+
+    // Agregar método para obtener el número actual del jugador:
+    private int obtenerNumeroActualJugador(int idJugador) {
+        try (Connection connection = SQLConnection.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(
+                 "SELECT Numero_Jugador FROM Jugador WHERE idJugador = ?")) {
+
+        stmt.setInt(1, idJugador);
+        ResultSet rs = stmt.executeQuery();
+        
+        if (rs.next()) {
+            return rs.getInt("Numero_Jugador");
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+    return -1; // Si no se encuentra, retorna -1
+}
+
+    private void actualizarJugadorDirectoBD(int idJugador, String nombre, int idCiudad, 
+                                       Date fechaNacimiento, int Numero_Jugador, int idEquipo) throws SQLException {
+        
+        // Obtener el número actual del jugador
+        int numeroActual = obtenerNumeroActualJugador(idJugador);
+        
+        // Solo verificar duplicados si el número ha cambiado
+        if (numeroActual != Numero_Jugador) {
+            try (Connection connection = SQLConnection.getConnection();
+                 PreparedStatement checkStmt = connection.prepareStatement(
+                 "SELECT COUNT(*) FROM Jugador WHERE Numero_Jugador = ? AND idJugador != ?")) {
+
+            checkStmt.setInt(1, Numero_Jugador);
+            checkStmt.setInt(2, idJugador);
+            ResultSet rs = checkStmt.executeQuery();
+            rs.next();
+            
+            if (rs.getInt(1) > 0) {
+                JOptionPane.showMessageDialog(this, 
+                    "Ya existe otro jugador con el número " + Numero_Jugador, 
+                    "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
+        
+        try (Connection connection = SQLConnection.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(
+             "UPDATE Jugador SET Nombre = ?, IdCiudad = ?, Fecha_Nacimiento = ?, " +
+             "Numero_Jugador = ?, IdEquipo = ? WHERE idJugador = ?")) {
+        
+        stmt.setString(1, nombre);
+        stmt.setInt(2, idCiudad);
+        stmt.setDate(3, new java.sql.Date(fechaNacimiento.getTime()));
+        stmt.setInt(4, Numero_Jugador);
+        stmt.setInt(5, idEquipo);
+        stmt.setInt(6, idJugador);
+        
+        int rowsAffected = stmt.executeUpdate();
+        
+        if (rowsAffected > 0) {
+            JOptionPane.showMessageDialog(this, "Jugador actualizado exitosamente", 
+                "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            
+            limpiarFormulario();
+            dispose();
+        } else {
+            JOptionPane.showMessageDialog(this, "No se pudo actualizar el jugador", 
+                "Error", JOptionPane.ERROR_MESSAGE);
+        }
+        }
+        }
+    }
+    
+    private void registrarNuevoJugador(String nombre, int idCiudad, Date fechaNacimiento, 
+                                     int Numero_Jugador, int idEquipo) {
+        try {
+            // Verificar si el número ya existe
+            try (Connection connection = SQLConnection.getConnection();
+                 PreparedStatement checkStmt = connection.prepareStatement(
+                     "SELECT COUNT(*) FROM Jugador WHERE Numero_Jugador = ?")) {
+                
+                checkStmt.setInt(1, Numero_Jugador);
+                ResultSet rs = checkStmt.executeQuery();
+                rs.next();
+                
+                if (rs.getInt(1) > 0) {
+                    JOptionPane.showMessageDialog(this, 
+                        "Ya existe un jugador con el número " + Numero_Jugador, 
+                        "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            }
+            
+            // Crear el jugador usando la Controladora
+            Jugador nuevoJugador = new Jugador(0, nombre, idCiudad, fechaNacimiento, Numero_Jugador, idEquipo);
+            
+            Controladora controladora = Controladora.getInstance();
+            controladora.insertarJugador(nuevoJugador);
+            
+            JOptionPane.showMessageDialog(this, "Jugador registrado exitosamente", 
+                "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            
+            limpiarFormulario();
+            
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error al registrar jugador: " + ex.getMessage(), 
+                "Error", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+        }
+    }
+    
+    private void limpiarFormulario() {
+        nametxt.setText("");
+        numtxt.setText("");
+        citycb.setSelectedIndex(0);
+        teamcb.setSelectedIndex(0);
+        spinner.setValue(new Date(1752253020000L));
+        
+        // Rehabilitar los ComboBox si estaban deshabilitados
+        citycb.setEnabled(true);
+        teamcb.setEnabled(true);
+        
+        // Resetear modo actualización
+        modoActualizacion = false;
+        jugadorIdActual = 0;
+        regbtn.setText("Registrar");
+    }
+    
+    // Agregar método para cargar datos de ComboBoxes:
+    public void cargarDatosComboBoxes() {
+        cargarCiudadesComboBox();
+        cargarEquiposComboBox();
+    }
+
+    private void cargarCiudadesComboBox() {
+        citycb.removeAllItems();
+        citycb.addItem("<Seleccione>");
+        
+        try (Connection connection = SQLConnection.getConnection();
+             PreparedStatement stmt = connection.prepareStatement("SELECT TRIM(Nombre_Ciudad) as Nombre_Ciudad FROM Ciudad ORDER BY Nombre_Ciudad");
+             ResultSet rs = stmt.executeQuery()) {
+            
+            while (rs.next()) {
+                citycb.addItem(rs.getString("Nombre_Ciudad"));
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, 
+                "Error al cargar ciudades: " + e.getMessage(),
+                "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+
+    private void cargarEquiposComboBox() {
+        teamcb.removeAllItems();
+        teamcb.addItem("<Seleccione>");
+        
+        try (Connection connection = SQLConnection.getConnection();
+             PreparedStatement stmt = connection.prepareStatement("SELECT TRIM(Nombre_Equipo) as Nombre_Equipo FROM Equipo ORDER BY Nombre_Equipo");
+             ResultSet rs = stmt.executeQuery()) {
+            
+            while (rs.next()) {
+                teamcb.addItem(rs.getString("Nombre_Equipo"));
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, 
+                "Error al cargar equipos: " + e.getMessage(),
+                "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+    }
+    private void actualizarJugadorSoloBasicos(int idJugador, String nombre, Date fechaNacimiento, int Numero_Jugador) {
+        try {
+            // Obtener el número actual del jugador y su equipo
+            int numeroActual = obtenerNumeroActualJugador(idJugador);
+            int equipoActual = obtenerEquipoActualJugador(idJugador);
+            
+            // Solo verificar duplicados si el número ha cambiado
+            if (numeroActual != Numero_Jugador) {
+                // Verificar si el número ya existe EN EL MISMO EQUIPO
+                try (Connection connection = SQLConnection.getConnection();
+                     PreparedStatement checkStmt = connection.prepareStatement(
+                         "SELECT COUNT(*) FROM Jugador WHERE Numero_Jugador = ? AND IdEquipo = ? AND idJugador != ?")) {
+                    
+                    checkStmt.setInt(1, Numero_Jugador);
+                    checkStmt.setInt(2, equipoActual);
+                    checkStmt.setInt(3, idJugador);
+                    ResultSet rs = checkStmt.executeQuery();
+                    rs.next();
+                    
+                    if (rs.getInt(1) > 0) {
+                        JOptionPane.showMessageDialog(this, 
+                            "Ya existe otro jugador con el número " + Numero_Jugador + " en el mismo equipo", 
+                            "Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                }
+            }
+            
+            // Actualizar solo nombre, número y fecha de nacimiento (NO ciudad ni equipo)
+            try (Connection connection = SQLConnection.getConnection();
+                 PreparedStatement stmt = connection.prepareStatement(
+                 "UPDATE Jugador SET Nombre = ?, Fecha_Nacimiento = ?, Numero_Jugador = ? WHERE idJugador = ?")) {
+            
+                stmt.setString(1, nombre);
+                stmt.setDate(2, new java.sql.Date(fechaNacimiento.getTime()));
+                stmt.setInt(3, Numero_Jugador);
+                stmt.setInt(4, idJugador);
+                
+                int rowsAffected = stmt.executeUpdate();
+                
+                if (rowsAffected > 0) {
+                    JOptionPane.showMessageDialog(this, "Jugador actualizado exitosamente", 
+                        "Éxito", JOptionPane.INFORMATION_MESSAGE);
+                    
+                    limpiarFormulario();
+                    dispose();
+                } else {
+                    JOptionPane.showMessageDialog(this, "No se pudo actualizar el jugador", 
+                        "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+            
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error al actualizar jugador: " + ex.getMessage(), 
+                "Error", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+        }
+    }
+    
+    private int obtenerEquipoActualJugador(int idJugador) {
+        try (Connection connection = SQLConnection.getConnection();
+             PreparedStatement stmt = connection.prepareStatement(
+                 "SELECT IdEquipo FROM Jugador WHERE idJugador = ?")) {
+
+            stmt.setInt(1, idJugador);
+            ResultSet rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                return rs.getInt("IdEquipo");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1; // Si no se encuentra, retorna -1
+    }
+
 }

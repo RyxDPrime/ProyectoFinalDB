@@ -20,7 +20,9 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
+import logico.Controladora;
 import logico.RoundedBorder;
+import logico.Juego;
 import server.SQLConnection;
 
 import javax.swing.JComboBox;
@@ -30,6 +32,10 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.SpinnerDateModel;
 import java.util.Date;
 import java.util.Calendar;
+import java.util.List;
+import java.util.ArrayList;
+import java.text.SimpleDateFormat;
+import java.sql.PreparedStatement;
 
 public class RegJuego extends JDialog {
 
@@ -46,6 +52,9 @@ public class RegJuego extends JDialog {
 	private JButton regbtn;
 	private JButton returnbtn;
 	
+	// Agregar variable de instancia para almacenar todos los equipos
+	private java.util.List<String> todosLosEquipos = new java.util.ArrayList<>();
+
 	/**
 	 * Launch the application.
 	 */
@@ -98,10 +107,11 @@ public class RegJuego extends JDialog {
 			taemBlabel.setBounds(15, 113, 150, 20);
 			panel.add(taemBlabel);
 			
+			// Modificar los ActionListeners de los ComboBox
 			teamAcb = new JComboBox();
 			teamAcb.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					validarEquipos();
+					actualizarEquipoB();
 				}
 			});
 			teamAcb.setModel(new DefaultComboBoxModel(new String[] {"<Seleccione>"}));
@@ -112,7 +122,7 @@ public class RegJuego extends JDialog {
 			teamBcb = new JComboBox();
 			teamBcb.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					validarEquipos();
+					actualizarEquipoA();
 				}
 			});
 			teamBcb.setModel(new DefaultComboBoxModel(new String[] {"<Seleccione>"}));
@@ -150,7 +160,7 @@ public class RegJuego extends JDialog {
 			regbtn = new JButton("Registrar");
 			regbtn.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					//Logica para guardar los datos, buscar si hay una funcion de buscar equipo y ciudad por nombre para tener los id
+					registrarJuego();
 				}
 			});
 			regbtn.addMouseListener(new MouseAdapter() {
@@ -205,19 +215,16 @@ public class RegJuego extends JDialog {
 		}
 	}
 	
+	// Modificar el método loadEquipos()
 	private void loadEquipos() {
-	    DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
-	    DefaultComboBoxModel<String> model2 = new DefaultComboBoxModel<>();
-	    model.addElement("<Seleccione>");
-	    model2.addElement("<Seleccione>");
+	    todosLosEquipos.clear();
 	    
 	    try (Connection connection = SQLConnection.getConnection();
 	         Statement stmt = connection.createStatement();
 	         ResultSet rs = stmt.executeQuery("SELECT Nombre_Equipo FROM Equipo ORDER BY Nombre_Equipo")) {
 	        
 	        while (rs.next()) {
-	            model.addElement(rs.getString("Nombre_Equipo"));
-	            model2.addElement(rs.getString("Nombre_Equipo"));
+	            todosLosEquipos.add(rs.getString("Nombre_Equipo"));
 	        }
 	    } catch (SQLException e) {
 	        JOptionPane.showMessageDialog(this, 
@@ -226,30 +233,166 @@ public class RegJuego extends JDialog {
 	        e.printStackTrace();
 	    }
 	    
-	    teamAcb.setModel(model);
-	    teamBcb.setModel(model2);
+	    // Cargar inicialmente todos los equipos en ambos ComboBox
+	    actualizarEquipoA();
+	    actualizarEquipoB();
 	}
 	
-	private void validarEquipos() {
-	    String equipoA = (String) teamAcb.getSelectedItem();
-	    String equipoB = (String) teamBcb.getSelectedItem();
+	// Reemplazar el método validarEquipos() con estos dos nuevos métodos
+	private void actualizarEquipoA() {
+	    String equipoSeleccionadoA = (String) teamAcb.getSelectedItem();
+	    String equipoSeleccionadoB = (String) teamBcb.getSelectedItem();
 	    
-	    if (equipoA != null && equipoB != null && 
-	        !equipoA.equals("<Seleccione>") && 
-	        !equipoB.equals("<Seleccione>") && 
-	        equipoA.equals(equipoB)) {
-	        
-	        JOptionPane.showMessageDialog(this,
-	            "No puede seleccionar el mismo equipo en ambos campos",
-	            "Error de selección",
-	            JOptionPane.ERROR_MESSAGE);
-	        
-	        // Revertir la selección
-	        if (teamAcb.getSelectedItem().equals(equipoA)) {
-	            teamBcb.setSelectedIndex(0);
-	        } else {
-	            teamAcb.setSelectedIndex(0);
+	    DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
+	    model.addElement("<Seleccione>");
+	    
+	    for (String equipo : todosLosEquipos) {
+	        // Agregar todos los equipos excepto el seleccionado en teamB
+	        if (!equipo.equals(equipoSeleccionadoB) || "<Seleccione>".equals(equipoSeleccionadoB)) {
+	            model.addElement(equipo);
 	        }
 	    }
+	    
+	    teamAcb.removeActionListener(teamAcb.getActionListeners()[0]); // Remover listener temporalmente
+	    teamAcb.setModel(model);
+	    if (equipoSeleccionadoA != null && !equipoSeleccionadoA.equals(equipoSeleccionadoB)) {
+	        teamAcb.setSelectedItem(equipoSeleccionadoA);
+	    }
+	    teamAcb.addActionListener(new ActionListener() { // Volver a agregar listener
+	        public void actionPerformed(ActionEvent e) {
+	            actualizarEquipoB();
+	        }
+	    });
+	}
+
+	private void actualizarEquipoB() {
+	    String equipoSeleccionadoB = (String) teamBcb.getSelectedItem();
+	    String equipoSeleccionadoA = (String) teamAcb.getSelectedItem();
+	    
+	    DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
+	    model.addElement("<Seleccione>");
+	    
+	    for (String equipo : todosLosEquipos) {
+	        // Agregar todos los equipos excepto el seleccionado en teamA
+	        if (!equipo.equals(equipoSeleccionadoA) || "<Seleccione>".equals(equipoSeleccionadoA)) {
+	            model.addElement(equipo);
+	        }
+	    }
+	    
+	    teamBcb.removeActionListener(teamBcb.getActionListeners()[0]); // Remover listener temporalmente
+	    teamBcb.setModel(model);
+	    if (equipoSeleccionadoB != null && !equipoSeleccionadoB.equals(equipoSeleccionadoA)) {
+	        teamBcb.setSelectedItem(equipoSeleccionadoB);
+	    }
+	    teamBcb.addActionListener(new ActionListener() { // Volver a agregar listener
+	        public void actionPerformed(ActionEvent e) {
+	            actualizarEquipoA();
+	        }
+	    });
+	}
+	
+	// Eliminar los métodos obtenerSiguienteIdJuego() y guardarJuegoEnBD() duplicados
+		// y simplificar el método registrarJuego():
+	private void registrarJuego() {
+		try {
+			// Validar que todos los campos estén completos
+			String equipoLocal = (String) teamAcb.getSelectedItem();
+			String equipoVisitante = (String) teamBcb.getSelectedItem();
+			String descripcion = desctxt.getText().trim();
+			Date fechaHora = (Date) spinner.getValue();
+			
+			System.out.println("=== Debug RegJuego ===");
+			System.out.println("Equipo Local seleccionado: '" + equipoLocal + "'");
+			System.out.println("Equipo Visitante seleccionado: '" + equipoVisitante + "'");
+			
+			if (equipoLocal == null || equipoLocal.equals("<Seleccione>")) {
+				JOptionPane.showMessageDialog(this, 
+					"Debe seleccionar el equipo local", 
+					"Error", JOptionPane.ERROR_MESSAGE);
+				return;
+			}
+			
+			if (equipoVisitante == null || equipoVisitante.equals("<Seleccione>")) {
+				JOptionPane.showMessageDialog(this, 
+					"Debe seleccionar el equipo visitante", 
+					"Error", JOptionPane.ERROR_MESSAGE);
+				return;
+			}
+			
+			if (descripcion.isEmpty()) {
+				JOptionPane.showMessageDialog(this, 
+					"Debe ingresar una descripción", 
+					"Error", JOptionPane.ERROR_MESSAGE);
+				return;
+			}
+			
+			// Obtener los IDs de los equipos
+			int idEquipoLocal = obtenerIdEquipo(equipoLocal);
+			int idEquipoVisitante = obtenerIdEquipo(equipoVisitante);
+			
+			System.out.println("ID Equipo Local obtenido: " + idEquipoLocal);
+			System.out.println("ID Equipo Visitante obtenido: " + idEquipoVisitante);
+			
+			if (idEquipoLocal == -1 || idEquipoVisitante == -1) {
+				JOptionPane.showMessageDialog(this, 
+					"Error al obtener los IDs de los equipos\n" +
+					"Equipo Local ID: " + idEquipoLocal + "\n" +
+					"Equipo Visitante ID: " + idEquipoVisitante, 
+					"Error", JOptionPane.ERROR_MESSAGE);
+				return;
+			}
+			
+			// Crear el objeto Juego - el ID será asignado automáticamente por la Controladora
+			Juego nuevoJuego = new Juego(0, descripcion, idEquipoLocal, idEquipoVisitante, fechaHora);
+			
+			System.out.println("Juego creado - Local: " + idEquipoLocal + ", Visitante: " + idEquipoVisitante);
+			
+			// Usar la Controladora para insertar (maneja automáticamente el ID)
+			Controladora controladora = Controladora.getInstance();
+			controladora.insertarJuego(nuevoJuego);
+			
+			JOptionPane.showMessageDialog(this, 
+				"Juego registrado exitosamente", 
+				"Éxito", JOptionPane.INFORMATION_MESSAGE);
+			
+			// Limpiar formulario
+			limpiarFormulario();
+			
+		} catch (Exception ex) {
+			JOptionPane.showMessageDialog(this, 
+				"Error al registrar el juego: " + ex.getMessage(), 
+				"Error", JOptionPane.ERROR_MESSAGE);
+			ex.printStackTrace();
+		}
+	}
+
+	// Mantener solo este método para obtener el ID del equipo:
+	private int obtenerIdEquipo(String nombreEquipo) {
+	    try (Connection connection = SQLConnection.getConnection();
+	         PreparedStatement stmt = connection.prepareStatement("SELECT IdEquipo FROM Equipo WHERE Nombre_Equipo = ?")) {
+	        
+	        stmt.setString(1, nombreEquipo);
+	        ResultSet rs = stmt.executeQuery();
+	        
+	        if (rs.next()) {
+	            return rs.getInt("IdEquipo");
+	        }
+	        
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    return -1;
+	}
+
+	// Mantener el método limpiarFormulario():
+	private void limpiarFormulario() {
+	    teamAcb.setSelectedIndex(0);
+	    teamBcb.setSelectedIndex(0);
+	    desctxt.setText("");
+	    spinner.setValue(new Date());
+	    
+	    // Actualizar los ComboBox
+	    actualizarEquipoA();
+	    actualizarEquipoB();
 	}
 }

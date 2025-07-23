@@ -8,7 +8,7 @@ public class Equipo {
 	public Equipo(int idEquipo, String nombre, int idCiudad) {
 		super();
 		this.idEquipo = idEquipo;
-		this.nombreString = nombreString;
+		this.nombreString = nombre;
 		this.idCiudad = idCiudad;
 	}
 
@@ -21,7 +21,7 @@ public class Equipo {
 	}
 
 	public String getNombreString() {
-		return nombreString;
+		return this.nombreString;
 	}
 
 	public void setNombreString(String nombreString) {

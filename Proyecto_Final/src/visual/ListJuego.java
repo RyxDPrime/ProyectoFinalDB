@@ -9,7 +9,6 @@ import java.awt.Font;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -33,6 +32,9 @@ import javax.swing.JComboBox;
 import javax.swing.DefaultComboBoxModel;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerDateModel;
+import java.util.Calendar;
 
 public class ListJuego extends JDialog {
 
@@ -57,7 +59,7 @@ public class ListJuego extends JDialog {
 	private DefaultTableModel model;
 	private String equipoA = "";
 	private String equipoB = "";
-	private Date fecha;
+	private java.util.Date fecha;
 	private JPanel panel;
 	private JComboBox teamAcb;
 	private JComboBox teamBcb;
@@ -66,6 +68,8 @@ public class ListJuego extends JDialog {
 	private JButton updatebtn;
 	private JButton detailbtn;
 	
+	private boolean isUpdatingRow = false;
+	private int juegoId = -1; // Para almacenar el ID del juego seleccionado
 
 	/**
 	 * Launch the application.
@@ -103,6 +107,15 @@ public class ListJuego extends JDialog {
 				if (ind >= 0) {	
 					equipoA = (String) table.getValueAt(ind, 0);
 					equipoB = (String) table.getValueAt(ind, 1);
+					java.sql.Timestamp fechaHora = (java.sql.Timestamp) table.getValueAt(ind, 3);
+					
+					// Obtener el ID del juego desde la base de datos usando fecha también
+					try {
+						juegoId = obtenerIdJuego(equipoA, equipoB, fechaHora);
+					} catch (Exception ex) {
+						ex.printStackTrace();
+					}
+					
 					updatebtn.setEnabled(true);
 					deletebtn.setEnabled(true);
 					detailbtn.setEnabled(true);
@@ -158,7 +171,13 @@ public class ListJuego extends JDialog {
 		returnbtn = new JButton("Retornar");
 		returnbtn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				dispose();
+				if (isUpdatingRow) {
+					// Si está en modo edición, cancelar la edición
+					cancelUpdateMode();
+				} else {
+					// Si no está en modo edición, cerrar el diálogo
+					dispose();
+				}
 			}
 		});
 		returnbtn.addMouseListener(new MouseAdapter() {
@@ -186,7 +205,72 @@ public class ListJuego extends JDialog {
 		deletebtn = new JButton("Eliminar");
 		deletebtn.addActionListener(new ActionListener() {
 			 public void actionPerformed(ActionEvent e) {
-			 }
+				int selectedRow = table.getSelectedRow();
+				if (selectedRow >= 0) {
+					// Obtener información del juego seleccionado
+					String equipoLocal = (String) table.getValueAt(selectedRow, 0);
+					String equipoVisitante = (String) table.getValueAt(selectedRow, 1);
+					String descripcion = (String) table.getValueAt(selectedRow, 2);
+					java.sql.Timestamp fechaHora = (java.sql.Timestamp) table.getValueAt(selectedRow, 3);
+					
+					// Mostrar diálogo de confirmación
+					int confirmacion = JOptionPane.showConfirmDialog(
+						ListJuego.this,
+						"¿Está seguro que desea eliminar este juego?\n\n" +
+						"Equipo Local: " + equipoLocal + "\n" +
+						"Equipo Visitante: " + equipoVisitante + "\n" +
+						"Descripción: " + descripcion + "\n" +
+						"Fecha: " + fechaHora,
+						"Confirmar Eliminación",
+						JOptionPane.YES_NO_OPTION,
+						JOptionPane.QUESTION_MESSAGE
+					);
+					
+					if (confirmacion == JOptionPane.YES_OPTION) {
+						try {
+							// Obtener el ID del juego a eliminar
+							int juegoIdToDelete = obtenerIdJuego(equipoLocal, equipoVisitante, fechaHora);
+							
+							if (juegoIdToDelete != -1) {
+								// Eliminar el juego usando la función de la Controladora
+								eliminarJuego(juegoIdToDelete);
+								
+								JOptionPane.showMessageDialog(
+									ListJuego.this,
+									"Juego eliminado correctamente",
+									"Eliminación Exitosa",
+									JOptionPane.INFORMATION_MESSAGE
+								);
+								
+								// Recargar la tabla
+								loadJuegos();
+								
+								// Deshabilitar botones ya que no hay selección
+								deletebtn.setEnabled(false);
+								updatebtn.setEnabled(false);
+								detailbtn.setEnabled(false);
+								
+							} else {
+								JOptionPane.showMessageDialog(
+									ListJuego.this,
+									"No se pudo encontrar el juego seleccionado",
+									"Error",
+									JOptionPane.ERROR_MESSAGE
+								);
+							}
+							
+						} catch (Exception ex) {
+							JOptionPane.showMessageDialog(
+								ListJuego.this,
+								"Error al eliminar el juego: " + ex.getMessage(),
+								"Error de Eliminación",
+								JOptionPane.ERROR_MESSAGE
+							);
+						 ex.printStackTrace();
+						}
+					}
+				}
+			}
 		});
 		deletebtn.addMouseListener(new MouseAdapter() {
 			@Override
@@ -216,7 +300,95 @@ public class ListJuego extends JDialog {
 		updatebtn = new JButton("Actualizar");
 		updatebtn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				
+				if (!isUpdatingRow) {
+					int selectedRow = table.getSelectedRow();
+					if (selectedRow != -1) {
+						makeTableEditable();
+						table.editCellAt(selectedRow, 2); // Empieza edición en la columna descripción
+						updatebtn.setText("Guardar");
+						returnbtn.setText("Cancelar");
+						isUpdatingRow = true;
+
+						// Deshabilitar otros botones
+						deletebtn.setEnabled(false);
+						detailbtn.setEnabled(false);
+						teamAcb.setEnabled(false);
+						teamBcb.setEnabled(false);
+					}
+				} else {
+					// Guardar cambios
+					if (table.getCellEditor() != null) {
+						table.getCellEditor().stopCellEditing();
+					}
+
+					int selectedRow = table.getSelectedRow();
+					if (selectedRow != -1) {
+						String equipoLocal = (String) model.getValueAt(selectedRow, 0);
+						String equipoVisitante = (String) model.getValueAt(selectedRow, 1);
+						String descripcion = (String) model.getValueAt(selectedRow, 2);
+						java.sql.Timestamp fechaHora = (java.sql.Timestamp) model.getValueAt(selectedRow, 3);
+
+						// Validaciones
+						if (equipoLocal == null || equipoLocal.trim().isEmpty() || equipoLocal.equals("")) {
+							JOptionPane.showMessageDialog(ListJuego.this,
+									"Debe seleccionar un equipo local válido",
+									"Error", JOptionPane.ERROR_MESSAGE);
+							return;
+						}
+						
+						if (equipoVisitante == null || equipoVisitante.trim().isEmpty() || equipoVisitante.equals("")) {
+							JOptionPane.showMessageDialog(ListJuego.this,
+									"Debe seleccionar un equipo visitante válido",
+									"Error", JOptionPane.ERROR_MESSAGE);
+							return;
+						}
+						
+						if (equipoLocal.equals(equipoVisitante)) {
+							JOptionPane.showMessageDialog(ListJuego.this,
+									"El equipo local y visitante no pueden ser el mismo",
+									"Error", JOptionPane.ERROR_MESSAGE);
+							return;
+						}
+
+						if (descripcion == null || descripcion.trim().isEmpty()) {
+							JOptionPane.showMessageDialog(ListJuego.this,
+									"La descripción no puede estar vacía",
+									"Error", JOptionPane.ERROR_MESSAGE);
+							return;
+						}
+
+						try {
+							// Obtener IDs de los equipos
+							int idEquipoLocal = obtenerIdEquipoPorNombre(equipoLocal);
+							int idEquipoVisitante = obtenerIdEquipoPorNombre(equipoVisitante);
+							
+							if (idEquipoLocal == -1 || idEquipoVisitante == -1) {
+								JOptionPane.showMessageDialog(ListJuego.this, 
+									"Uno o ambos equipos no existen en la base de datos", 
+									"Error", JOptionPane.ERROR_MESSAGE);
+								return;
+							}
+
+							// Actualizar en la base de datos
+							actualizarJuego(juegoId, idEquipoLocal, idEquipoVisitante, descripcion, fechaHora);
+
+							JOptionPane.showMessageDialog(ListJuego.this,
+									"Juego actualizado correctamente",
+									"Éxito", JOptionPane.INFORMATION_MESSAGE);
+
+							// Reset estado
+							resetUpdateMode();
+							loadJuegos();
+						} catch (Exception ex) {
+							JOptionPane.showMessageDialog(ListJuego.this,
+									"Error al actualizar juego: " + ex.getMessage(),
+									"Error", JOptionPane.ERROR_MESSAGE);
+						 ex.printStackTrace();
+						 resetUpdateMode();
+						 loadJuegos();
+						}
+					}
+				}
 			}
 		});
 		updatebtn.addMouseListener(new MouseAdapter() {
@@ -262,6 +434,15 @@ public class ListJuego extends JDialog {
 		});
 		detailbtn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				if (juegoId != -1) {
+					DetalleJuego detalle = new DetalleJuego(juegoId);
+					detalle.setLocationRelativeTo(ListJuego.this);
+					detalle.setVisible(true);
+				} else {
+					JOptionPane.showMessageDialog(ListJuego.this,
+							"Seleccione un juego para ver los detalles",
+							"Sin selección", JOptionPane.WARNING_MESSAGE);
+				}
 			}
 		});
 		detailbtn.setBorder(new RoundedBorder(SecondaryC, 1, 20));
@@ -399,4 +580,323 @@ public class ListJuego extends JDialog {
 	        e.printStackTrace();
 	    }
 	}
+	
+	private void makeTableEditable() {
+	    try {
+	        // Detener cualquier edición activa primero
+	        if (table.getCellEditor() != null) {
+	            table.getCellEditor().cancelCellEditing();
+	        }
+	        
+	        // Crear ComboBox para equipos locales
+	        JComboBox<String> equipoLocalComboBox = new JComboBox<>();
+	        
+	        // Crear ComboBox para equipos visitantes
+	        JComboBox<String> equipoVisitanteComboBox = new JComboBox<>();
+	        
+	        // Cargar equipos desde la base de datos (SIN elementos vacíos)
+	        try (Connection connection = SQLConnection.getConnection();
+	             Statement stmt = connection.createStatement();
+	             ResultSet rs = stmt.executeQuery("SELECT Nombre_Equipo FROM Equipo ORDER BY Nombre_Equipo")) {
+	            
+	            while (rs.next()) {
+	                String nombreEquipo = rs.getString("Nombre_Equipo");
+	                equipoLocalComboBox.addItem(nombreEquipo);
+	                equipoVisitanteComboBox.addItem(nombreEquipo);
+	            }
+	        } catch (SQLException e) {
+	            e.printStackTrace();
+	        }
+	        
+	        // Crear Spinner para fecha y hora con el mismo formato que RegJuego
+	        JSpinner fechaSpinner = new JSpinner();
+	        fechaSpinner.setFont(new Font("Century Gothic", Font.PLAIN, 16));
+	        fechaSpinner.setModel(new SpinnerDateModel(new java.util.Date(), null, null, Calendar.MINUTE));
+	        
+	        // Establece el formato de fecha y hora igual que in RegJuego
+	        JSpinner.DateEditor editor = new JSpinner.DateEditor(fechaSpinner, "dd/MM/yyyy HH:mm");
+	        fechaSpinner.setEditor(editor);
+	        
+	        // Crear editor personalizado para el spinner de fecha
+	        javax.swing.DefaultCellEditor fechaEditor = new javax.swing.DefaultCellEditor(new javax.swing.JTextField()) {
+	            private JSpinner spinner;
+	            private JSpinner.DefaultEditor spinnerEditor;
+	            
+	            @Override
+	            public Component getTableCellEditorComponent(JTable table, Object value,
+	                    boolean isSelected, int row, int column) {
+	                
+	                spinner = new JSpinner();
+	                spinner.setModel(new SpinnerDateModel(new java.util.Date(), null, null, Calendar.MINUTE));
+	                
+	                JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(spinner, "dd/MM/yyyy HH:mm");
+	                spinner.setEditor(dateEditor);
+	                spinnerEditor = dateEditor;
+	                
+	                // Si hay un valor existente, establecerlo en el spinner
+	                if (value instanceof java.sql.Timestamp) {
+	                    spinner.setValue(new java.util.Date(((java.sql.Timestamp) value).getTime()));
+	                } else if (value instanceof java.util.Date) {
+	                    spinner.setValue((java.util.Date) value);
+	                } else {
+	                    spinner.setValue(new java.util.Date());
+	                }
+	                
+	                return spinner;
+	            }
+	            
+	            @Override
+	            public Object getCellEditorValue() {
+	                if (spinner != null) {
+	                    java.util.Date selectedDate = (java.util.Date) spinner.getValue();
+	                    return new java.sql.Timestamp(selectedDate.getTime());
+	                }
+	                return new java.sql.Timestamp(new java.util.Date().getTime());
+	            }
+	            
+	            @Override
+	            public boolean isCellEditable(java.util.EventObject e) {
+	                return isUpdatingRow;
+	            }
+	        };
+	        
+	        // Configurar editores personalizados para cada columna
+	        table.getColumnModel().getColumn(0).setCellEditor(new javax.swing.DefaultCellEditor(equipoLocalComboBox) {
+	            @Override
+	            public boolean isCellEditable(java.util.EventObject e) {
+	                return isUpdatingRow;
+	            }
+	        });
+	        
+	        table.getColumnModel().getColumn(1).setCellEditor(new javax.swing.DefaultCellEditor(equipoVisitanteComboBox) {
+	            @Override
+	            public boolean isCellEditable(java.util.EventObject e) {
+	                return isUpdatingRow;
+	            }
+	        });
+	        
+	        table.getColumnModel().getColumn(2).setCellEditor(new javax.swing.DefaultCellEditor(new javax.swing.JTextField()) {
+	            @Override
+	            public boolean isCellEditable(java.util.EventObject e) {
+	                return isUpdatingRow;
+	            }
+	        });
+	        
+	        // Usar el editor personalizado del spinner para la columna de fecha
+	        table.getColumnModel().getColumn(3).setCellEditor(fechaEditor);
+	        
+	    } catch (Exception e) {
+	        JOptionPane.showMessageDialog(this,
+	            "Error al configurar la tabla para edición: " + e.getMessage(),
+	            "Error", JOptionPane.ERROR_MESSAGE);
+	        e.printStackTrace();
+	    }
+	}
+
+	private void resetUpdateMode() {
+	    isUpdatingRow = false;
+	    updatebtn.setText("Actualizar");
+	    returnbtn.setText("Retornar");
+	    
+	    // IMPORTANTE: Detener cualquier edición activa antes de limpiar editores
+	    if (table.getCellEditor() != null) {
+	        table.getCellEditor().cancelCellEditing();
+	    }
+	    
+	    // Limpiar editores personalizados
+	    table.setDefaultEditor(Object.class, null);
+	    if (table.getColumnCount() > 0) {
+	        table.getColumnModel().getColumn(0).setCellEditor(null);
+	    }
+	    if (table.getColumnCount() > 1) {
+	        table.getColumnModel().getColumn(1).setCellEditor(null);
+	    }
+	    if (table.getColumnCount() > 2) {
+	        table.getColumnModel().getColumn(2).setCellEditor(null);
+	    }
+	    if (table.getColumnCount() > 3) {
+	        table.getColumnModel().getColumn(3).setCellEditor(null);
+	    }
+	    
+	    // Limpiar selección
+	    table.clearSelection();
+
+	    deletebtn.setEnabled(false);
+	    detailbtn.setEnabled(false);
+	    updatebtn.setEnabled(false);
+	    teamAcb.setEnabled(true);
+	    teamBcb.setEnabled(true);
+	}
+
+	private void cancelUpdateMode() {
+	    // Detener edición ANTES de resetear
+	    if (table.getCellEditor() != null) {
+	        table.getCellEditor().cancelCellEditing();
+	    }
+	    
+	    resetUpdateMode();
+	    loadJuegos();
+	}
+
+	private int obtenerIdJuego(String equipoLocal, String equipoVisitante, java.sql.Timestamp fechaHora) throws SQLException {
+	    String sql = "SELECT j.IdJuego FROM Juego j " +
+	                 "JOIN Equipo e1 ON j.Id_EquipoA_Local = e1.IdEquipo " +
+	                 "JOIN Equipo e2 ON j.Id_EquipoB_Visitante = e2.IdEquipo " +
+	                 "WHERE e1.Nombre_Equipo = ? AND e2.Nombre_Equipo = ? AND j.Fecha_Hora = ?";
+	    
+	    try (Connection connection = SQLConnection.getConnection();
+	         PreparedStatement stmt = connection.prepareStatement(sql)) {
+	        
+	        stmt.setString(1, equipoLocal);
+	        stmt.setString(2, equipoVisitante);
+	        stmt.setTimestamp(3, fechaHora);
+	        
+	        ResultSet rs = stmt.executeQuery();
+	        if (rs.next()) {
+	            return rs.getInt("IdJuego");
+	        }
+	    }
+	    return -1;
+	}
+
+	private int obtenerIdEquipoPorNombre(String nombreEquipo) throws SQLException {
+	    String sql = "SELECT IdEquipo FROM Equipo WHERE Nombre_Equipo = ?";
+	    
+	    try (Connection connection = SQLConnection.getConnection();
+	         PreparedStatement stmt = connection.prepareStatement(sql)) {
+	        
+	        stmt.setString(1, nombreEquipo);
+	        
+	        ResultSet rs = stmt.executeQuery();
+	        if (rs.next()) {
+	            return rs.getInt("IdEquipo");
+	        }
+	    }
+	    return -1;
+	}
+
+	private void actualizarJuego(int idJuego, int idEquipoLocal, int idEquipoVisitante, 
+						   String descripcion, java.sql.Timestamp fechaHora) throws SQLException {
+    Connection connection = null;
+    try {
+        connection = SQLConnection.getConnection();
+        connection.setAutoCommit(false);
+        
+        // 1. Verificar que ambos equipos existen
+        String verificarEquipo = "SELECT COUNT(*) FROM Equipo WHERE IdEquipo = ?";
+        try (PreparedStatement stmtVerificar = connection.prepareStatement(verificarEquipo)) {
+            stmtVerificar.setInt(1, idEquipoLocal);
+            ResultSet rs1 = stmtVerificar.executeQuery();
+            rs1.next();
+            if (rs1.getInt(1) == 0) {
+                throw new SQLException("El equipo local con ID " + idEquipoLocal + " no existe");
+            }
+            
+            stmtVerificar.setInt(1, idEquipoVisitante);
+            ResultSet rs2 = stmtVerificar.executeQuery();
+            rs2.next();
+            if (rs2.getInt(1) == 0) {
+                throw new SQLException("El equipo visitante con ID " + idEquipoVisitante + " no existe");
+            }
+        }
+        
+        // 2. Actualizar juego
+        String sql = "UPDATE Juego SET Id_EquipoA_Local = ?, Id_EquipoB_Visitante = ?, " +
+                     "Descripcion = ?, Fecha_Hora = ? WHERE IdJuego = ?";
+        
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, idEquipoLocal);
+            stmt.setInt(2, idEquipoVisitante);
+            stmt.setString(3, descripcion);
+            stmt.setTimestamp(4, fechaHora);
+            stmt.setInt(5, idJuego);
+            
+            int filasActualizadas = stmt.executeUpdate();
+            if (filasActualizadas == 0) {
+                throw new SQLException("No se pudo actualizar el juego. Verifique que el juego existe.");
+            }
+        }
+        
+        // 3. Commit
+        connection.commit();
+        
+    } catch (SQLException e) {
+        if (connection != null) {
+            try {
+                connection.rollback();
+            } catch (SQLException rollbackEx) {
+                rollbackEx.printStackTrace();
+            }
+        }
+        throw e;
+    } finally {
+        if (connection != null) {
+            try {
+                connection.setAutoCommit(true);
+                connection.close();
+            } catch (SQLException closeEx) {
+                closeEx.printStackTrace();
+            }
+        }
+    }
+}
+
+private void eliminarJuego(int idJuego) throws SQLException {
+    Connection connection = null;
+    try {
+        connection = SQLConnection.getConnection();
+        connection.setAutoCommit(false);
+        
+        // 1. Verificar que el juego existe antes de eliminarlo
+        String verificarSql = "SELECT COUNT(*) FROM Juego WHERE IdJuego = ?";
+        try (PreparedStatement stmtVerificar = connection.prepareStatement(verificarSql)) {
+            stmtVerificar.setInt(1, idJuego);
+            ResultSet rs = stmtVerificar.executeQuery();
+            rs.next();
+            if (rs.getInt(1) == 0) {
+                throw new SQLException("El juego con ID " + idJuego + " no existe");
+            }
+        }
+        
+        // 2. Eliminar primero las estadísticas del juego (si existen)
+        String deleteEstadisticasSql = "DELETE FROM [dbo].[Estadistica de Juego] WHERE idJuego = ?";
+        try (PreparedStatement stmtEstadisticas = connection.prepareStatement(deleteEstadisticasSql)) {
+            stmtEstadisticas.setInt(1, idJuego);
+            stmtEstadisticas.executeUpdate();
+        }
+        
+        // 3. Eliminar el juego
+        String deleteJuegoSql = "DELETE FROM Juego WHERE IdJuego = ?";
+        try (PreparedStatement stmtJuego = connection.prepareStatement(deleteJuegoSql)) {
+            stmtJuego.setInt(1, idJuego);
+            int filasEliminadas = stmtJuego.executeUpdate();
+            
+            if (filasEliminadas == 0) {
+                throw new SQLException("No se pudo eliminar el juego");
+            }
+        }
+        
+        // 4. Commit de la transacción
+        connection.commit();
+        
+    } catch (SQLException e) {
+        if (connection != null) {
+            try {
+                connection.rollback();
+            } catch (SQLException rollbackEx) {
+                rollbackEx.printStackTrace();
+            }
+        }
+        throw e;
+    } finally {
+        if (connection != null) {
+            try {
+                connection.setAutoCommit(true);
+                connection.close();
+            } catch (SQLException closeEx) {
+                closeEx.printStackTrace();
+            }
+        }
+    }
+}
 }

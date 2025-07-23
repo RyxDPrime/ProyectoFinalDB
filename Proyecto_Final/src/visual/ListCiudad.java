@@ -66,7 +66,9 @@ public class ListCiudad extends JDialog {
 	private JButton updatebtn;
 	private JButton addbtn;
 
-	
+	private boolean isAddingNewRow = false;
+	private boolean isUpdatingRow = false;
+	private int updatingRowIndex = -1;
 
 	/**
 	 * Launch the application.
@@ -104,6 +106,20 @@ public class ListCiudad extends JDialog {
 				int ind = table.getSelectedRow();
 				if(ind >= 0) { 
 					nameCiudad = (String) table.getValueAt(ind, 0);
+					
+					// Obtener el código de la ciudad desde la controladora
+					try {
+						Controladora controladora = Controladora.getInstance();
+						for (Ciudad ciudad : controladora.getMisCiudades()) {
+							if (ciudad.getNombre().equals(nameCiudad)) {
+								cod = String.valueOf(ciudad.getCodCiudad());
+								break;
+							}
+						}
+					} catch (Exception ex) {
+						ex.printStackTrace();
+					}
+					
 					deletebtn.setEnabled(true);
 					updatebtn.setEnabled(true);
 				}
@@ -170,22 +186,31 @@ public class ListCiudad extends JDialog {
 			 public void actionPerformed(ActionEvent e) {
 			        String nombre = nametxt.getText().trim();
 			        
-			        try (Connection connection = SQLConnection.getConnection();
-			             PreparedStatement stmt = connection.prepareStatement(
-			                 "SELECT Nombre_Ciudad FROM Ciudad WHERE Nombre_Ciudad LIKE ? ORDER BY Nombre_Ciudad")) {
+			        if (nombre.isEmpty()) {
+			            // If search field is empty, load all cities
+			            loadCiudad();
+			            return;
+			        }
+			        
+			        try {
+			            Controladora controladora = Controladora.getInstance();
+			            controladora.cargarCiudadesFromDB(); // Load all cities
 			            
-			            stmt.setString(1, "%" + nombre + "%");
-			            ResultSet rs = stmt.executeQuery();
+			            model.setRowCount(0); // Clear table
 			            
-			            model.setRowCount(0); // Limpiar tabla
-			            
-			            while (rs.next()) {
-			                Object[] row = {
-			                    rs.getString("Nombre_Ciudad")
-			                };
-			                model.addRow(row);
+			            // Filter cities that match the search term
+			            for (Ciudad ciudad : controladora.getMisCiudades()) {
+			                if (ciudad.getNombre().toLowerCase().contains(nombre.toLowerCase())) {
+			                    Object[] row = {
+			                        ciudad.getNombre()
+			                    };
+			                    model.addRow(row);
+			                }
 			            }
-			        } catch (SQLException ex) {
+			            
+			            // Clear search field after search
+			            nametxt.setText("");
+			        } catch (Exception ex) {
 			            JOptionPane.showMessageDialog(ListCiudad.this, 
 			                "Error al buscar ciudades: " + ex.getMessage(),
 			                "Error", JOptionPane.ERROR_MESSAGE);
@@ -217,10 +242,21 @@ public class ListCiudad extends JDialog {
 			}
 		});
 		returnbtn.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				dispose();
-			}
-		});
+    public void actionPerformed(ActionEvent e) {
+        // Detener cualquier edición activa PRIMERO
+        if (table.getCellEditor() != null) {
+            table.getCellEditor().cancelCellEditing();
+        }
+        
+        if (isAddingNewRow) {
+            cancelAddMode();
+        } else if (isUpdatingRow) {
+            cancelUpdateMode();
+        } else {
+            dispose();
+        }
+    }
+});
 		returnbtn.setBorder(new RoundedBorder(SecondaryC, 1, 20));
 		returnbtn.setBackground(new Color(248, 248, 248));
 		returnbtn.setForeground(SecondaryC);
@@ -232,7 +268,7 @@ public class ListCiudad extends JDialog {
 		deletebtn = new JButton("Eliminar");
 		deletebtn.addActionListener(new ActionListener() {
 			 public void actionPerformed(ActionEvent e) {
-			        if (nameCiudad != null && !nameCiudad.isEmpty()) {
+			        if (cod != null && !cod.isEmpty()) {
 			            int confirm = JOptionPane.showConfirmDialog(
 			                ListCiudad.this, 
 			                "¿Está seguro de eliminar la ciudad '" + nameCiudad + "'?",
@@ -240,24 +276,19 @@ public class ListCiudad extends JDialog {
 			                JOptionPane.YES_NO_OPTION);
 			            
 			            if (confirm == JOptionPane.YES_OPTION) {
-			                try (Connection connection = SQLConnection.getConnection();
-			                     PreparedStatement stmt = connection.prepareStatement(
-			                         "DELETE FROM Ciudad WHERE Nombre_Ciudad = ?")) {
+			                try {
+			                    Controladora controladora = Controladora.getInstance();
+			                    controladora.deleteCiudad(Integer.parseInt(cod));
 			                    
-			                    stmt.setString(1, nameCiudad);
-			                    int rowsAffected = stmt.executeUpdate();
-			                    
-			                    if (rowsAffected > 0) {
-			                        JOptionPane.showMessageDialog(
-			                            ListCiudad.this, 
-			                            "Ciudad eliminada correctamente",
-			                            "Éxito",
-			                            JOptionPane.INFORMATION_MESSAGE);
-			                        loadCiudad(); // Actualizar la tabla
-			                        deletebtn.setEnabled(false);
-			                        updatebtn.setEnabled(false);
-			                    }
-			                } catch (SQLException ex) {
+			                    JOptionPane.showMessageDialog(
+			                        ListCiudad.this, 
+			                        "Ciudad eliminada correctamente",
+			                        "Éxito",
+			                        JOptionPane.INFORMATION_MESSAGE);
+			                    loadCiudad(); // Actualizar la tabla
+			                    deletebtn.setEnabled(false);
+			                    updatebtn.setEnabled(false);
+			                } catch (Exception ex) {
 			                    JOptionPane.showMessageDialog(
 			                        ListCiudad.this, 
 			                        "Error al eliminar ciudad: " + ex.getMessage(),
@@ -296,40 +327,86 @@ public class ListCiudad extends JDialog {
 		updatebtn = new JButton("Actualizar");
 		updatebtn.addActionListener(new ActionListener() {
 		    public void actionPerformed(ActionEvent e) {
-		        if (nameCiudad != null && !nameCiudad.isEmpty()) {
-		            String nuevoNombre = JOptionPane.showInputDialog(
-		                ListCiudad.this, 
-		                "Ingrese el nuevo nombre para la ciudad:",
-		                "Actualizar Ciudad",
-		                JOptionPane.PLAIN_MESSAGE);
-		            
-		            if (nuevoNombre != null && !nuevoNombre.trim().isEmpty()) {
-		                try (Connection connection = SQLConnection.getConnection();
-		                     PreparedStatement stmt = connection.prepareStatement(
-		                         "UPDATE Ciudad SET Nombre_Ciudad = ? WHERE Nombre_Ciudad = ?")) {
-		                    
-		                    stmt.setString(1, nuevoNombre.trim());
-		                    stmt.setString(2, nameCiudad);
-		                    int rowsAffected = stmt.executeUpdate();
-		                    
-		                    if (rowsAffected > 0) {
-		                        JOptionPane.showMessageDialog(
-		                            ListCiudad.this, 
-		                            "Ciudad actualizada correctamente",
-		                            "Éxito",
-		                            JOptionPane.INFORMATION_MESSAGE);
-		                        loadCiudad(); // Actualizar la tabla
-		                        updatebtn.setEnabled(false);
-		                        deletebtn.setEnabled(false);
+		        if (!isUpdatingRow) {
+		            // Modo Actualizar
+		            if (cod != null && !cod.isEmpty()) {
+		                try {
+		                    int selectedRow = table.getSelectedRow();
+		                    if (selectedRow < 0) {
+		                        JOptionPane.showMessageDialog(ListCiudad.this, 
+		                            "Debe seleccionar una ciudad para actualizar", 
+		                            "Error", JOptionPane.ERROR_MESSAGE);
+		                        return;
 		                    }
-		                } catch (SQLException ex) {
-		                    JOptionPane.showMessageDialog(
-		                        ListCiudad.this, 
-		                        "Error al actualizar ciudad: " + ex.getMessage(),
-		                        "Error", 
-		                        JOptionPane.ERROR_MESSAGE);
+		                    
+		                    makeTableEditableForUpdate();
+		                    table.editCellAt(selectedRow, 0);
+		                    
+		                    updatebtn.setText("Guardar Cambios");
+		                    returnbtn.setText("Cancelar");
+		                    isUpdatingRow = true;
+		                    updatingRowIndex = selectedRow;
+		                    
+		                    addbtn.setEnabled(false);
+		                    deletebtn.setEnabled(false);
+		                    searchbtn.setEnabled(false);
+		                    
+		                } catch (Exception ex) {
+		                    JOptionPane.showMessageDialog(ListCiudad.this, 
+		                        "Error al iniciar actualización: " + ex.getMessage(), 
+		                        "Error", JOptionPane.ERROR_MESSAGE);
 		                    ex.printStackTrace();
 		                }
+		            }
+		        } else {
+		            // Modo Guardar Cambios
+		            try {
+		                if (table.getCellEditor() != null) {
+		                    table.getCellEditor().stopCellEditing();
+		                }
+		                
+		                String nuevoNombre = (String) model.getValueAt(updatingRowIndex, 0);
+		                
+		                if (nuevoNombre == null || nuevoNombre.trim().isEmpty()) {
+		                    JOptionPane.showMessageDialog(ListCiudad.this, 
+		                        "El nombre de la ciudad no puede estar vacío", 
+		                        "Error", JOptionPane.ERROR_MESSAGE);
+		                    return;
+		                }
+		                
+		                Controladora controladora = Controladora.getInstance();
+		                Ciudad ciudadActualizada = new Ciudad(Integer.parseInt(cod), nuevoNombre.trim());
+		                
+		                int index = -1;
+		                for (int i = 0; i < controladora.getMisCiudades().size(); i++) {
+		                    if (controladora.getMisCiudades().get(i).getCodCiudad() == Integer.parseInt(cod)) {
+		                        index = i;
+		                        break;
+		                    }
+		                }
+		                
+		                if (index != -1) {
+		                    controladora.updateCiudad(ciudadActualizada, index);
+		                    
+		                    JOptionPane.showMessageDialog(ListCiudad.this, 
+		                        "Ciudad actualizada correctamente", 
+		                        "Éxito", JOptionPane.INFORMATION_MESSAGE);
+		                    
+		                    resetUpdateMode();
+		                    loadCiudad();
+		                } else {
+		                    JOptionPane.showMessageDialog(ListCiudad.this, 
+		                        "Error: No se pudo encontrar la ciudad", 
+		                        "Error", JOptionPane.ERROR_MESSAGE);
+		                }
+		                
+		            } catch (Exception ex) {
+		                JOptionPane.showMessageDialog(ListCiudad.this, 
+		                    "Error al guardar cambios: " + ex.getMessage(), 
+		                    "Error", JOptionPane.ERROR_MESSAGE);
+		                ex.printStackTrace();
+		                resetUpdateMode();
+		                loadCiudad();
 		            }
 		        }
 		    }
@@ -375,35 +452,59 @@ public class ListCiudad extends JDialog {
 		});
 		addbtn.addActionListener(new ActionListener() {
 			 public void actionPerformed(ActionEvent e) {
-			        String nombre = JOptionPane.showInputDialog(
-			            ListCiudad.this, 
-			            "Ingrese el nombre de la nueva ciudad:",
-			            "Agregar Ciudad",
-			            JOptionPane.PLAIN_MESSAGE);
-			        
-			        if (nombre != null && !nombre.trim().isEmpty()) {
-			            try (Connection connection = SQLConnection.getConnection();
-			                 PreparedStatement stmt = connection.prepareStatement(
-			                     "INSERT INTO Ciudad (Nombre_Ciudad) VALUES (?)")) {
-			                
-			                stmt.setString(1, nombre.trim());
-			                int rowsAffected = stmt.executeUpdate();
-			                
-			                if (rowsAffected > 0) {
-			                    JOptionPane.showMessageDialog(
-			                        ListCiudad.this, 
-			                        "Ciudad agregada correctamente",
-			                        "Éxito",
-			                        JOptionPane.INFORMATION_MESSAGE);
-			                    loadCiudad(); // Actualizar la tabla
+			        if (!isAddingNewRow) {
+			            // Modo Agregar
+			            Object[] newRow = {"Nueva Ciudad"};
+			            model.addRow(newRow);
+			            
+			            makeTableEditable();
+			            
+			            int newRowIndex = model.getRowCount() - 1;
+			            table.setRowSelectionInterval(newRowIndex, newRowIndex);
+			            table.editCellAt(newRowIndex, 0);
+			            
+			            addbtn.setText("Guardar");
+			            returnbtn.setText("Cancelar");
+			            isAddingNewRow = true;
+			            updatebtn.setEnabled(false);
+			            deletebtn.setEnabled(false);
+			            searchbtn.setEnabled(false);
+			            
+			        } else {
+			            // Modo Guardar
+			            try {
+			                if (table.getCellEditor() != null) {
+			                    table.getCellEditor().stopCellEditing();
 			                }
-			            } catch (SQLException ex) {
-			                JOptionPane.showMessageDialog(
-			                    ListCiudad.this, 
-			                    "Error al agregar ciudad: " + ex.getMessage(),
-			                    "Error", 
-			                    JOptionPane.ERROR_MESSAGE);
+			                
+			                int rowIndex = model.getRowCount() - 1;
+			                String nombreCiudad = (String) model.getValueAt(rowIndex, 0);
+			                
+			                if (nombreCiudad == null || nombreCiudad.trim().isEmpty()) {
+			                    JOptionPane.showMessageDialog(ListCiudad.this, 
+			                        "El nombre de la ciudad no puede estar vacío", 
+			                        "Error", JOptionPane.ERROR_MESSAGE);
+			                    return;
+			                }
+			                
+			                Controladora controladora = Controladora.getInstance();
+			                Ciudad nuevaCiudad = new Ciudad(0, nombreCiudad.trim());
+			                controladora.insertarCiudad(nuevaCiudad);
+			                
+			                JOptionPane.showMessageDialog(ListCiudad.this, 
+			                    "Ciudad agregada correctamente", 
+			                    "Éxito", JOptionPane.INFORMATION_MESSAGE);
+			                
+			                resetAddMode();
+			                loadCiudad();
+			                
+			            } catch (Exception ex) {
+			                JOptionPane.showMessageDialog(ListCiudad.this, 
+			                    "Error al guardar ciudad: " + ex.getMessage(), 
+			                    "Error", JOptionPane.ERROR_MESSAGE);
 			                ex.printStackTrace();
+			                resetAddMode();
+			                loadCiudad();
 			            }
 			        }
 			    }
@@ -420,19 +521,40 @@ public class ListCiudad extends JDialog {
 	}
 	
 	public void loadCiudad() {
+	    // Detener cualquier edición activa PRIMERO
+	    if (table.getCellEditor() != null) {
+	        table.getCellEditor().cancelCellEditing();
+	    }
+	    
+	    // Limpiar editores antes de cargar datos
+	    table.setDefaultEditor(Object.class, null);
+	    if (table.getColumnCount() > 0) {
+	        table.getColumnModel().getColumn(0).setCellEditor(null);
+	    }
+	    
 	    model.setRowCount(0); // Limpiar la tabla
 	    
-	    try (Connection connection = SQLConnection.getConnection();
-	         Statement stmt = connection.createStatement();
-	         ResultSet rs = stmt.executeQuery("SELECT Nombre_Ciudad FROM Ciudad ORDER BY Nombre_Ciudad")) {
+	    try {
+	        Controladora controladora = Controladora.getInstance();
+	        controladora.cargarCiudadesFromDB(); // Load data from database
 	        
-	        while (rs.next()) {
+	        System.out.println("Loading ciudades - found: " + controladora.getMisCiudades().size()); // Debug
+	        
+	        for (Ciudad ciudad : controladora.getMisCiudades()) {
+	            System.out.println("Adding ciudad to table: Name=" + ciudad.getNombre()); // Debug
+	            
 	            Object[] row = {
-	                rs.getString("Nombre_Ciudad")
+	                ciudad.getNombre() // Solo el nombre, sin ID
 	            };
 	            model.addRow(row);
 	        }
-	    } catch (SQLException e) {
+	        
+	        if (controladora.getMisCiudades().isEmpty()) {
+	            JOptionPane.showMessageDialog(this, 
+	                "No se encontraron ciudades en la base de datos.",
+	                "Información", JOptionPane.INFORMATION_MESSAGE);
+	        }
+	    } catch (Exception e) {
 	        JOptionPane.showMessageDialog(this, 
 	            "Error al cargar ciudades: " + e.getMessage(),
 	            "Error", JOptionPane.ERROR_MESSAGE);
@@ -442,4 +564,115 @@ public class ListCiudad extends JDialog {
 	    updatebtn.setEnabled(false);
 	    deletebtn.setEnabled(false);
 	}
+	
+	private void makeTableEditable() {
+	    try {
+	        // Detener cualquier edición activa primero
+	        if (table.getCellEditor() != null) {
+	            table.getCellEditor().cancelCellEditing();
+	        }
+	        
+	        table.getColumnModel().getColumn(0).setCellEditor(new javax.swing.DefaultCellEditor(new javax.swing.JTextField()));
+	        
+	        table.setDefaultEditor(Object.class, new javax.swing.DefaultCellEditor(new javax.swing.JTextField()) {
+	            @Override
+	            public boolean isCellEditable(java.util.EventObject e) {
+	                return isAddingNewRow;
+	            }
+	        });
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	}
+
+	private void makeTableEditableForUpdate() {
+	    try {
+	        // Detener cualquier edición activa primero
+	        if (table.getCellEditor() != null) {
+	            table.getCellEditor().cancelCellEditing();
+	        }
+	        
+	        table.getColumnModel().getColumn(0).setCellEditor(new javax.swing.DefaultCellEditor(new javax.swing.JTextField()));
+	        
+	        table.setDefaultEditor(Object.class, new javax.swing.DefaultCellEditor(new javax.swing.JTextField()) {
+	            @Override
+	            public boolean isCellEditable(java.util.EventObject e) {
+	                if (!isUpdatingRow) return false;
+	                int row = table.getSelectedRow();
+	                return row == updatingRowIndex;
+	            }
+	        });
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	}
+
+	private void resetAddMode() {
+	    addbtn.setText("Agregar");
+	    returnbtn.setText("Retornar");
+	    isAddingNewRow = false;
+	    
+	    // IMPORTANTE: Detener cualquier edición activa antes de limpiar editores
+	    if (table.getCellEditor() != null) {
+	        table.getCellEditor().cancelCellEditing();
+	    }
+	    
+	    // Limpiar editores personalizados
+	    table.setDefaultEditor(Object.class, null);
+	    table.getColumnModel().getColumn(0).setCellEditor(null);
+	    
+	    // Limpiar selección
+	    table.clearSelection();
+	    
+	    searchbtn.setEnabled(true);
+	    updatebtn.setEnabled(false);
+	    deletebtn.setEnabled(false);
+	}
+
+	private void cancelAddMode() {
+    // Detener edición ANTES de remover la fila
+    if (table.getCellEditor() != null) {
+        table.getCellEditor().cancelCellEditing();
+    }
+    
+    int lastRow = model.getRowCount() - 1;
+    if (lastRow >= 0 && isAddingNewRow) {
+        model.removeRow(lastRow);
+    }
+    resetAddMode();
+}
+
+	private void resetUpdateMode() {
+	    updatebtn.setText("Actualizar");
+	    returnbtn.setText("Retornar");
+	    isUpdatingRow = false;
+	    updatingRowIndex = -1;
+	    
+	    // IMPORTANTE: Detener cualquier edición activa antes de limpiar editores
+	    if (table.getCellEditor() != null) {
+	        table.getCellEditor().cancelCellEditing();
+	    }
+	    
+	    // Limpiar editores personalizados
+	    table.setDefaultEditor(Object.class, null);
+	    table.getColumnModel().getColumn(0).setCellEditor(null);
+	    
+	    // Limpiar selección
+	    table.clearSelection();
+	    
+	    addbtn.setEnabled(true);
+	    searchbtn.setEnabled(true);
+	    updatebtn.setEnabled(false);
+	    deletebtn.setEnabled(false);
+	}
+
+	private void cancelUpdateMode() {
+    // Detener edición ANTES de resetear
+    if (table.getCellEditor() != null) {
+        table.getCellEditor().cancelCellEditing();
+    }
+    
+    resetUpdateMode();
+    loadCiudad();
+}
 }

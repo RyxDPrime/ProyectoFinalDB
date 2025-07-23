@@ -61,7 +61,13 @@ public class Jugador {
 		return idEquipo;
 	}
 
+	public void setIdCiudad(int idCiudad) {
+		this.idCiudad = idCiudad;
+	}
+
+	public void setIdEquipo(int idEquipo) {
+		this.idEquipo = idEquipo;
+	}
 	
 	
 }
-	

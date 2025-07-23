@@ -15,7 +15,9 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
+import logico.Controladora;
 import logico.RoundedBorder;
+import logico.Estadistica;
 import server.SQLConnection;
 
 import javax.swing.JScrollPane;
@@ -32,6 +34,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import javax.swing.JTextField;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.DefaultCellEditor;
+import javax.swing.AbstractCellEditor;
+import javax.swing.table.TableCellEditor;
 
 public class ListEstadisticas extends JDialog {
 
@@ -59,6 +66,10 @@ public class ListEstadisticas extends JDialog {
 	private JButton deletebtn;
 	private JButton returnbtn;
 	private JButton addbtn;
+	private String estadisticaId = "";
+	private boolean isAddingNewRow = false;
+	private boolean isUpdatingRow = false;
+	private int updatingRowIndex = -1;
 
 	/**
 	 * Launch the application.
@@ -98,6 +109,21 @@ public class ListEstadisticas extends JDialog {
 				if (ind >= 0) {
 					estadistica = (String) table.getValueAt(ind, 0);
 					
+					// Obtener el ID de la estadística
+					try {
+						Controladora controladora = Controladora.getInstance();
+						for (Estadistica est : controladora.getMisEstadisticas()) {
+							if (est.getDescripcion().equals(estadistica)) {
+								estadisticaId = String.valueOf(est.getIdEstadistica());
+								break;
+							}
+						}
+					} catch (Exception ex) {
+						ex.printStackTrace();
+					}
+					
+					deletebtn.setEnabled(true);
+					updatebtn.setEnabled(true);
 				}
 			}
 		});
@@ -157,6 +183,42 @@ public class ListEstadisticas extends JDialog {
 		});
 		searchbtn.addActionListener(new ActionListener() {
 			 public void actionPerformed(ActionEvent e) {
+			        String descripcion = estadisticastxt.getText().trim();
+			        
+			        if (descripcion.isEmpty()) {
+			            loadEstadisticas();
+			            return;
+			        }
+			        
+			        try {
+			            Controladora controladora = Controladora.getInstance();
+			            controladora.cargarEstadisticasFromDB();
+			            
+			            model.setRowCount(0);
+			            
+			            for (Estadistica est : controladora.getMisEstadisticas()) {
+			                if (est.getDescripcion().toLowerCase().contains(descripcion.toLowerCase())) {
+			                    Object[] row = {
+			                        est.getDescripcion(),
+			                        est.getValor()
+			                    };
+			                    model.addRow(row);
+			                }
+			            }
+			            
+			            if (model.getRowCount() == 0) {
+			                JOptionPane.showMessageDialog(ListEstadisticas.this, 
+			                    "No se encontraron estadísticas que coincidan con: " + descripcion,
+			                    "Sin resultados", JOptionPane.INFORMATION_MESSAGE);
+			            }
+			            
+			            estadisticastxt.setText("");
+			        } catch (Exception ex) {
+			            JOptionPane.showMessageDialog(ListEstadisticas.this, 
+			                "Error al buscar estadísticas: " + ex.getMessage(),
+			                "Error", JOptionPane.ERROR_MESSAGE);
+			            ex.printStackTrace();
+			        }
 			    }
 		});
 		searchbtn.setBorder(new RoundedBorder(SecondaryC, 1, 20));
@@ -184,10 +246,21 @@ public class ListEstadisticas extends JDialog {
 			}
 		});
 		returnbtn.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				dispose();
-			}
-		});
+    public void actionPerformed(ActionEvent e) {
+        // Detener cualquier edición activa PRIMERO
+        if (table.getCellEditor() != null) {
+            table.getCellEditor().cancelCellEditing();
+        }
+        
+        if (isAddingNewRow) {
+            cancelAddMode();
+        } else if (isUpdatingRow) {
+            cancelUpdateMode();
+        } else {
+            dispose();
+        }
+    }
+});
 		returnbtn.setBorder(new RoundedBorder(SecondaryC, 1, 20));
 		returnbtn.setBackground(new Color(248, 248, 248));
 		returnbtn.setForeground(SecondaryC);
@@ -199,6 +272,36 @@ public class ListEstadisticas extends JDialog {
 		deletebtn = new JButton("Eliminar");
 		deletebtn.addActionListener(new ActionListener() {
 			 public void actionPerformed(ActionEvent e) {
+				if (estadisticaId != null && !estadisticaId.isEmpty()) {
+                    int confirm = JOptionPane.showConfirmDialog(
+                        ListEstadisticas.this, 
+                        "¿Está seguro de eliminar la estadística '" + estadistica + "'?",
+                        "Confirmar Eliminación",
+                        JOptionPane.YES_NO_OPTION);
+                    
+                    if (confirm == JOptionPane.YES_OPTION) {
+                        try {
+                            Controladora controladora = Controladora.getInstance();
+                            controladora.deleteEstadistica(Integer.parseInt(estadisticaId));
+                            
+                            JOptionPane.showMessageDialog(
+                                ListEstadisticas.this, 
+                                "Estadística eliminada correctamente",
+                                "Éxito",
+                                JOptionPane.INFORMATION_MESSAGE);
+                            loadEstadisticas();
+                            deletebtn.setEnabled(false);
+                            updatebtn.setEnabled(false);
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(
+                                ListEstadisticas.this, 
+                                "Error al eliminar estadística: " + ex.getMessage(),
+                                "Error", 
+                                JOptionPane.ERROR_MESSAGE);
+                            ex.printStackTrace();
+                        }
+                    }
+                }
 			 }
 		});
 		deletebtn.addMouseListener(new MouseAdapter() {
@@ -228,6 +331,100 @@ public class ListEstadisticas extends JDialog {
 		updatebtn = new JButton("Actualizar");
 		updatebtn.addActionListener(new ActionListener() {
 		    public void actionPerformed(ActionEvent e) {
+		        if (!isUpdatingRow) {
+		            // Modo Actualizar
+		            if (estadisticaId != null && !estadisticaId.isEmpty()) {
+		                try {
+		                    int selectedRow = table.getSelectedRow();
+		                    if (selectedRow < 0) {
+		                        JOptionPane.showMessageDialog(ListEstadisticas.this, 
+		                            "Debe seleccionar una estadística para actualizar", 
+		                            "Error", JOptionPane.ERROR_MESSAGE);
+		                        return;
+		                    }
+		                    
+		                    makeTableEditableForUpdate();
+		                    table.editCellAt(selectedRow, 0);
+		                    
+		                    updatebtn.setText("Guardar Cambios");
+		                    returnbtn.setText("Cancelar");
+		                    isUpdatingRow = true;
+		                    updatingRowIndex = selectedRow;
+		                    
+		                    addbtn.setEnabled(false);
+		                    deletebtn.setEnabled(false);
+		                    searchbtn.setEnabled(false);
+		                    
+		                } catch (Exception ex) {
+		                    JOptionPane.showMessageDialog(ListEstadisticas.this, 
+		                        "Error al iniciar actualización: " + ex.getMessage(), 
+		                        "Error", JOptionPane.ERROR_MESSAGE);
+		                    ex.printStackTrace();
+		                }
+		            }
+		        } else {
+		            // Modo Guardar Cambios
+		            try {
+		                if (table.getCellEditor() != null) {
+		                    table.getCellEditor().stopCellEditing();
+		                }
+		                
+		                String nuevaDescripcion = (String) model.getValueAt(updatingRowIndex, 0);
+		                Integer nuevoValor = (Integer) model.getValueAt(updatingRowIndex, 1);
+		                
+		                if (nuevaDescripcion == null || nuevaDescripcion.trim().isEmpty()) {
+		                    JOptionPane.showMessageDialog(ListEstadisticas.this, 
+		                        "La descripción no puede estar vacía", 
+		                        "Error", JOptionPane.ERROR_MESSAGE);
+		                    return;
+		                }
+		                
+		                if (nuevoValor == null || nuevoValor < 0) {
+		                    JOptionPane.showMessageDialog(ListEstadisticas.this, 
+		                        "El valor debe ser mayor o igual a 0", 
+		                        "Error", JOptionPane.ERROR_MESSAGE);
+		                    return;
+		                }
+		                
+		                Controladora controladora = Controladora.getInstance();
+		                Estadistica estadisticaActualizada = new Estadistica(
+		                    Integer.parseInt(estadisticaId), 
+		                    nuevaDescripcion.trim(), 
+		                    nuevoValor
+		                );
+		                
+		                int index = -1;
+		                for (int i = 0; i < controladora.getMisEstadisticas().size(); i++) {
+		                    if (controladora.getMisEstadisticas().get(i).getIdEstadistica() == Integer.parseInt(estadisticaId)) {
+		                        index = i;
+		                        break;
+		                    }
+		                }
+		                
+		                if (index != -1) {
+		                    controladora.updateEstadistica(estadisticaActualizada, index);
+		                    
+		                    JOptionPane.showMessageDialog(ListEstadisticas.this, 
+		                        "Estadística actualizada correctamente", 
+		                        "Éxito", JOptionPane.INFORMATION_MESSAGE);
+		                    
+		                    resetUpdateMode();
+		                    loadEstadisticas();
+		                } else {
+		                    JOptionPane.showMessageDialog(ListEstadisticas.this, 
+		                        "Error: No se pudo encontrar la estadística", 
+		                        "Error", JOptionPane.ERROR_MESSAGE);
+		                }
+		                
+		            } catch (Exception ex) {
+		                JOptionPane.showMessageDialog(ListEstadisticas.this, 
+		                    "Error al guardar cambios: " + ex.getMessage(), 
+		                    "Error", JOptionPane.ERROR_MESSAGE);
+		                ex.printStackTrace();
+		                resetUpdateMode();
+		                loadEstadisticas();
+		            }
+		        }
 		    }
 		});
 		updatebtn.addMouseListener(new MouseAdapter() {
@@ -271,7 +468,69 @@ public class ListEstadisticas extends JDialog {
 		});
 		addbtn.addActionListener(new ActionListener() {
 			 public void actionPerformed(ActionEvent e) {
-			        
+			        if (!isAddingNewRow) {
+			            // Modo Agregar
+			            Object[] newRow = {"Nueva Estadística", 0};
+			            model.addRow(newRow);
+			            
+			            makeTableEditable();
+			            
+			            int newRowIndex = model.getRowCount() - 1;
+			            table.setRowSelectionInterval(newRowIndex, newRowIndex);
+			            table.editCellAt(newRowIndex, 0);
+			            
+			            addbtn.setText("Guardar");
+			            returnbtn.setText("Cancelar");
+			            isAddingNewRow = true;
+			            updatebtn.setEnabled(false);
+			            deletebtn.setEnabled(false);
+			            searchbtn.setEnabled(false);
+			            
+			        } else {
+			            // Modo Guardar
+			            try {
+			                if (table.getCellEditor() != null) {
+			                    table.getCellEditor().stopCellEditing();
+			                }
+			                
+			                int rowIndex = model.getRowCount() - 1;
+			                String descripcion = (String) model.getValueAt(rowIndex, 0);
+			                Integer valor = (Integer) model.getValueAt(rowIndex, 1);
+			                
+			                if (descripcion == null || descripcion.trim().isEmpty()) {
+			                    JOptionPane.showMessageDialog(ListEstadisticas.this, 
+			                        "La descripción no puede estar vacía", 
+			                        "Error", JOptionPane.ERROR_MESSAGE);
+			                    return;
+			                }
+			                
+			                if (valor == null || valor < 0) {
+			                    JOptionPane.showMessageDialog(ListEstadisticas.this, 
+			                        "El valor debe ser mayor o igual a 0", 
+			                        "Error", JOptionPane.ERROR_MESSAGE);
+			                    return;
+			                }
+			                
+			                Controladora controladora = Controladora.getInstance();
+			                Estadistica nuevaEstadistica = new Estadistica(0, descripcion.trim(), valor);
+			                controladora.insertarEstadistica(nuevaEstadistica);
+			                
+			                JOptionPane.showMessageDialog(ListEstadisticas.this, 
+			                    "Estadística agregada correctamente", 
+			                    "Éxito", JOptionPane.INFORMATION_MESSAGE);
+			                
+			                resetAddMode();
+			                loadEstadisticas();
+			                
+			            } catch (Exception ex) {
+			                JOptionPane.showMessageDialog(ListEstadisticas.this, 
+			                    "Error al guardar estadística: " + ex.getMessage(), 
+			                    "Error", JOptionPane.ERROR_MESSAGE);
+			                ex.printStackTrace();
+			                resetAddMode();
+			                loadEstadisticas();
+			            }
+			        }
 			    }
 		});
 		addbtn.setBorder(new RoundedBorder(SecondaryC, 1, 20));
@@ -282,6 +541,200 @@ public class ListEstadisticas extends JDialog {
 		addbtn.setBounds(22, 494, 169, 40);
 		panel.add(addbtn);
 
+		loadEstadisticas();
 	}
+	
+	public void loadEstadisticas() {
+    // Detener cualquier edición activa PRIMERO
+    if (table.getCellEditor() != null) {
+        table.getCellEditor().cancelCellEditing();
+    }
+    
+    // Limpiar editores antes de cargar datos
+    table.setDefaultEditor(Object.class, null);
+    if (table.getColumnCount() > 0) {
+        table.getColumnModel().getColumn(0).setCellEditor(null);
+    }
+    if (table.getColumnCount() > 1) {
+        table.getColumnModel().getColumn(1).setCellEditor(null);
+    }
+    
+    model.setRowCount(0); // Limpiar la tabla
+    
+    try {
+        Controladora controladora = Controladora.getInstance();
+        controladora.cargarEstadisticasFromDB(); // Cargar datos desde la base de datos
+        
+        System.out.println("Loading estadísticas - found: " + controladora.getMisEstadisticas().size()); // Debug
+        
+        for (Estadistica estadistica : controladora.getMisEstadisticas()) {
+            System.out.println("Adding estadística to table: Descripcion=" + estadistica.getDescripcion() + 
+                             ", Valor=" + estadistica.getValor()); // Debug
+            
+            Object[] row = {
+                estadistica.getDescripcion(), // Descripción de la estadística
+                estadistica.getValor() // Valor de la estadística
+            };
+            model.addRow(row);
+        }
+        
+        if (controladora.getMisEstadisticas().isEmpty()) {
+            JOptionPane.showMessageDialog(this, 
+                "No se encontraron estadísticas en la base de datos.",
+                "Información", JOptionPane.INFORMATION_MESSAGE);
+        }
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, 
+            "Error al cargar estadísticas: " + e.getMessage(),
+            "Error", JOptionPane.ERROR_MESSAGE);
+        e.printStackTrace();
+    }
+    
+    updatebtn.setEnabled(false);
+    deletebtn.setEnabled(false);
+}
+	
+	private void makeTableEditable() {
+    try {
+        // Detener cualquier edición activa primero
+        if (table.getCellEditor() != null) {
+            table.getCellEditor().cancelCellEditing();
+        }
+        
+        table.getColumnModel().getColumn(0).setCellEditor(new DefaultCellEditor(new JTextField()));
+        table.getColumnModel().getColumn(1).setCellEditor(new SpinnerCellEditor());
+        
+        table.setDefaultEditor(Object.class, new DefaultCellEditor(new JTextField()) {
+            @Override
+            public boolean isCellEditable(java.util.EventObject e) {
+                return isAddingNewRow;
+            }
+        });
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
 
+private void makeTableEditableForUpdate() {
+    try {
+        // Detener cualquier edición activa primero
+        if (table.getCellEditor() != null) {
+            table.getCellEditor().cancelCellEditing();
+        }
+        
+        table.getColumnModel().getColumn(0).setCellEditor(new DefaultCellEditor(new JTextField()));
+        table.getColumnModel().getColumn(1).setCellEditor(new SpinnerCellEditor());
+        
+        table.setDefaultEditor(Object.class, new DefaultCellEditor(new JTextField()) {
+            @Override
+            public boolean isCellEditable(java.util.EventObject e) {
+                if (!isUpdatingRow) return false;
+                int row = table.getSelectedRow();
+                return row == updatingRowIndex;
+            }
+        });
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
+
+private class SpinnerCellEditor extends AbstractCellEditor implements TableCellEditor {
+    private static final long serialVersionUID = 1L;
+    private JSpinner spinner;
+    
+    public SpinnerCellEditor() {
+        spinner = new JSpinner(new SpinnerNumberModel(0, 0, Integer.MAX_VALUE, 1));
+    }
+    
+    @Override
+    public Object getCellEditorValue() {
+        return spinner.getValue();
+    }
+    
+    @Override
+    public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+        if (value instanceof Integer) {
+            spinner.setValue(value);
+        } else {
+            spinner.setValue(0);
+        }
+        return spinner;
+    }
+    
+    @Override
+    public boolean isCellEditable(java.util.EventObject e) {
+        return isAddingNewRow || isUpdatingRow;
+    }
+}
+
+private void resetAddMode() {
+    addbtn.setText("Agregar");
+    returnbtn.setText("Retornar");
+    isAddingNewRow = false;
+    
+    // IMPORTANTE: Detener cualquier edición activa antes de limpiar editores
+    if (table.getCellEditor() != null) {
+        table.getCellEditor().cancelCellEditing();
+    }
+    
+    // Limpiar editores personalizados
+    table.setDefaultEditor(Object.class, null);
+    table.getColumnModel().getColumn(0).setCellEditor(null);
+    table.getColumnModel().getColumn(1).setCellEditor(null);
+    
+    // Limpiar selección
+    table.clearSelection();
+    
+    searchbtn.setEnabled(true);
+    updatebtn.setEnabled(false);
+    deletebtn.setEnabled(false);
+}
+
+private void cancelAddMode() {
+    // Detener edición ANTES de remover la fila
+    if (table.getCellEditor() != null) {
+        table.getCellEditor().cancelCellEditing();
+    }
+    
+    int lastRow = model.getRowCount() - 1;
+    if (lastRow >= 0 && isAddingNewRow) {
+        model.removeRow(lastRow);
+    }
+    resetAddMode();
+}
+
+private void resetUpdateMode() {
+    updatebtn.setText("Actualizar");
+    returnbtn.setText("Retornar");
+    isUpdatingRow = false;
+    updatingRowIndex = -1;
+    
+    // IMPORTANTE: Detener cualquier edición activa antes de limpiar editores
+    if (table.getCellEditor() != null) {
+        table.getCellEditor().cancelCellEditing();
+    }
+    
+    // Limpiar editores personalizados
+    table.setDefaultEditor(Object.class, null);
+    table.getColumnModel().getColumn(0).setCellEditor(null);
+    table.getColumnModel().getColumn(1).setCellEditor(null);
+    
+    // Limpiar selección
+    table.clearSelection();
+    
+    addbtn.setEnabled(true);
+    searchbtn.setEnabled(true);
+    updatebtn.setEnabled(false);
+    deletebtn.setEnabled(false);
+}
+
+private void cancelUpdateMode() {
+    // Detener edición ANTES de resetear
+    if (table.getCellEditor() != null) {
+        table.getCellEditor().cancelCellEditing();
+    }
+    
+    resetUpdateMode();
+    loadEstadisticas();
+}
 }

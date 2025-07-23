@@ -234,41 +234,62 @@ public class ListJugadores extends JDialog {
 		deleteBtn.addActionListener(new ActionListener() {
 			 public void actionPerformed(ActionEvent e) {
 			        if(NumJugador != 0) {
-			            int option = JOptionPane.showConfirmDialog(null, 
-			                "¿Está seguro de eliminar este jugador?", 
-			                "Confirmar Eliminación", 
-			                JOptionPane.YES_NO_OPTION);
-			            
-			            if(option == JOptionPane.YES_OPTION) {
-			                try (Connection connection = SQLConnection.getConnection();
-			                     PreparedStatement stmt = connection.prepareStatement(
-			                         "DELETE FROM Jugador WHERE Numero_Jugador = ?")) {
-			                    
-			                    stmt.setInt(1, NumJugador);
-			                    int rowsAffected = stmt.executeUpdate();
-			                    
-			                    if(rowsAffected > 0) {
+			            // Mostrar información del jugador antes de eliminar
+			            int selectedRow = table.getSelectedRow();
+			            if (selectedRow >= 0) {
+			                String nombreJugador = (String) table.getValueAt(selectedRow, 1);
+			                String equipoJugador = (String) table.getValueAt(selectedRow, 3);
+			                
+			                int option = JOptionPane.showConfirmDialog(null, 
+			                    "¿Está seguro de eliminar al jugador?\n\n" +
+			                    "Nombre: " + nombreJugador + "\n" +
+			                    "Equipo: " + equipoJugador + "\n" +
+			                    "Número: " + NumJugador + "\n\n" +
+			                    "Esta acción no se puede deshacer.", 
+			                    "Confirmar Eliminación", 
+			                    JOptionPane.YES_NO_OPTION,
+			                    JOptionPane.WARNING_MESSAGE);
+			                
+			                if(option == JOptionPane.YES_OPTION) {
+			                    try (Connection connection = SQLConnection.getConnection();
+			                         PreparedStatement stmt = connection.prepareStatement(
+			                             "DELETE FROM Jugadores WHERE Numero_Jugador = ?")) {
+			                        
+			                        stmt.setInt(1, NumJugador);
+			                        int rowsAffected = stmt.executeUpdate();
+			                        
+			                        if(rowsAffected > 0) {
+			                            JOptionPane.showMessageDialog(null, 
+			                                "Jugador eliminado correctamente", 
+			                                "Éxito", 
+			                                JOptionPane.INFORMATION_MESSAGE);
+			                            
+			                            // Actualizar tabla y resetear selección
+			                            loadJugadores();
+			                            updateBtn.setEnabled(false);
+			                            deleteBtn.setEnabled(false);
+			                            NumJugador = 0;
+			                            
+			                        } else {
+			                            JOptionPane.showMessageDialog(null, 
+			                                "No se encontró el jugador", 
+			                                "Error", 
+			                                JOptionPane.ERROR_MESSAGE);
+			                        }
+			                    } catch (SQLException ex) {
 			                        JOptionPane.showMessageDialog(null, 
-			                            "Jugador eliminado correctamente", 
-			                            "Éxito", 
-			                            JOptionPane.INFORMATION_MESSAGE);
-			                        loadJugadores(); // Actualizar la tabla
-			                        updateBtn.setEnabled(false);
-			                        deleteBtn.setEnabled(false);
-			                    } else {
-			                        JOptionPane.showMessageDialog(null, 
-			                            "No se encontró el jugador", 
+			                            "Error al eliminar jugador: " + ex.getMessage(), 
 			                            "Error", 
 			                            JOptionPane.ERROR_MESSAGE);
+			                        ex.printStackTrace();
 			                    }
-			                } catch (SQLException ex) {
-			                    JOptionPane.showMessageDialog(null, 
-			                        "Error al eliminar jugador: " + ex.getMessage(), 
-			                        "Error", 
-			                        JOptionPane.ERROR_MESSAGE);
-			                    ex.printStackTrace();
 			                }
 			            }
+			        } else {
+			            JOptionPane.showMessageDialog(null, 
+			                "Por favor seleccione un jugador para eliminar", 
+			                "Seleccionar Jugador", 
+			                JOptionPane.WARNING_MESSAGE);
 			        }
 			    }
 		});
@@ -299,9 +320,61 @@ public class ListJugadores extends JDialog {
 		
 		updateBtn = new JButton("Actualizar");
 		updateBtn.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				
-			}
+		    public void actionPerformed(ActionEvent e) {
+		        if (NumJugador != 0) {
+		            try (Connection connection = SQLConnection.getConnection();
+		                 PreparedStatement stmt = connection.prepareStatement(
+		                     "SELECT j.idJugador, j.Nombre, j.IdCiudad, j.Fecha_Nacimiento, " +
+		                     "j.Numero_Jugador, j.IdEquipo, c.Nombre_Ciudad, e.Nombre_Equipo " +
+		                     "FROM Jugador j " +
+		                     "LEFT JOIN Ciudad c ON j.IdCiudad = c.IdCiudad " +
+		                     "LEFT JOIN Equipo e ON j.IdEquipo = e.IdEquipo " +
+		                     "WHERE j.Numero_Jugador = ?")) {
+		        
+		        stmt.setInt(1, NumJugador);
+		        
+		        try (ResultSet rs = stmt.executeQuery()) {
+		            if (rs.next()) {
+		                // Crear instancia de RegJugador en modo actualización
+		                RegJugador regJugador = new RegJugador();
+		                
+		                // Configurar modo actualización
+		                regJugador.configurarModoActualizacion(
+		                    rs.getInt("idJugador"),
+		                    rs.getString("Nombre"),
+		                    rs.getString("Nombre_Ciudad"),
+		                    rs.getDate("Fecha_Nacimiento"),
+		                    rs.getInt("Numero_Jugador"),
+		                    rs.getString("Nombre_Equipo")
+		                );
+		                
+		                // Mostrar el diálogo
+		                regJugador.setModal(true);
+		                regJugador.setVisible(true);
+		                
+		                // Actualizar la tabla después de cerrar el diálogo
+		                loadJugadores();
+		                
+		                // NO resetear la selección inmediatamente
+		                // Mantener los botones habilitados para permitir ediciones consecutivas
+		                // updateBtn.setEnabled(false);
+		                // deleteBtn.setEnabled(false);
+		                // NumJugador = 0;
+		                
+		            } else {
+		                JOptionPane.showMessageDialog(null, 
+		                    "No se encontraron los datos del jugador", 
+		                    "Error", JOptionPane.ERROR_MESSAGE);
+		            }
+		        }
+		        
+		    } catch (SQLException ex) {
+		        JOptionPane.showMessageDialog(null, 
+		            "Error al obtener datos del jugador: " + ex.getMessage(), 
+		            "Error", JOptionPane.ERROR_MESSAGE);
+		    }
+		}
+		    }
 		});
 		updateBtn.addMouseListener(new MouseAdapter() {
 			@Override
