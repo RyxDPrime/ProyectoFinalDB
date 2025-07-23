@@ -41,7 +41,7 @@ public class ListJuego extends JDialog {
 	private static final Color PrimaryC = new Color(3, 88, 157);
 	private static final Color SecondaryC = new Color(3, 104, 196);
 	private static final Color ThirdC = new Color(247, 251, 255);
-	private static final Color AccentColor = new Color(247, 109, 71); // 255, 150, 95
+	private static final Color AccentColor = new Color(247, 109, 71);
 	private static final Color AccentHoverColor = new Color(255, 136, 73);
 	private static final Color BGC = new Color(236, 240, 241);
 	private static final Color TextColor = new Color(52, 73, 94);
@@ -68,7 +68,7 @@ public class ListJuego extends JDialog {
 	private JButton detailbtn;
 
 	private boolean isUpdatingRow = false;
-	private int juegoId = -1; // Para almacenar el ID del juego seleccionado
+	private int juegoId = -1;
 
 	/**
 	 * Launch the application.
@@ -109,7 +109,6 @@ public class ListJuego extends JDialog {
 					equipoB = (String) table.getValueAt(ind, 1);
 					java.sql.Timestamp fechaHora = (java.sql.Timestamp) table.getValueAt(ind, 3);
 
-					// Obtener el ID del juego desde la base de datos usando fecha también
 					try {
 						juegoId = obtenerIdJuego(equipoA, equipoB, fechaHora);
 					} catch (Exception ex) {
@@ -173,10 +172,8 @@ public class ListJuego extends JDialog {
 		returnbtn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (isUpdatingRow) {
-					// Si está en modo edición, cancelar la edición
 					cancelUpdateMode();
 				} else {
-					// Si no está en modo edición, cerrar el diálogo
 					dispose();
 				}
 			}
@@ -209,13 +206,11 @@ public class ListJuego extends JDialog {
 			public void actionPerformed(ActionEvent e) {
 				int selectedRow = table.getSelectedRow();
 				if (selectedRow >= 0) {
-					// Obtener información del juego seleccionado
 					String equipoLocal = (String) table.getValueAt(selectedRow, 0);
 					String equipoVisitante = (String) table.getValueAt(selectedRow, 1);
 					String descripcion = (String) table.getValueAt(selectedRow, 2);
 					java.sql.Timestamp fechaHora = (java.sql.Timestamp) table.getValueAt(selectedRow, 3);
 
-					// Mostrar diálogo de confirmación
 					int confirmacion = JOptionPane.showConfirmDialog(ListJuego.this,
 							"¿Está seguro que desea eliminar este juego?\n\n" + "Equipo Local: " + equipoLocal + "\n"
 									+ "Equipo Visitante: " + equipoVisitante + "\n" + "Descripción: " + descripcion
@@ -224,20 +219,16 @@ public class ListJuego extends JDialog {
 
 					if (confirmacion == JOptionPane.YES_OPTION) {
 						try {
-							// Obtener el ID del juego a eliminar
 							int juegoIdToDelete = obtenerIdJuego(equipoLocal, equipoVisitante, fechaHora);
 
 							if (juegoIdToDelete != -1) {
-								// Eliminar el juego usando la función de la Controladora
 								eliminarJuego(juegoIdToDelete);
 
 								JOptionPane.showMessageDialog(ListJuego.this, "Juego eliminado correctamente",
 										"Eliminación Exitosa", JOptionPane.INFORMATION_MESSAGE);
 
-								// Recargar la tabla
 								loadJuegos();
 
-								// Deshabilitar botones ya que no hay selección
 								deletebtn.setEnabled(false);
 								updatebtn.setEnabled(false);
 								detailbtn.setEnabled(false);
@@ -291,19 +282,17 @@ public class ListJuego extends JDialog {
 					int selectedRow = table.getSelectedRow();
 					if (selectedRow != -1) {
 						makeTableEditable();
-						table.editCellAt(selectedRow, 2); // Empieza edición en la columna descripción
+						table.editCellAt(selectedRow, 2);
 						updatebtn.setText("Guardar");
 						returnbtn.setText("Cancelar");
 						isUpdatingRow = true;
 
-						// Deshabilitar otros botones
 						deletebtn.setEnabled(false);
 						detailbtn.setEnabled(false);
 						teamAcb.setEnabled(false);
 						teamBcb.setEnabled(false);
 					}
 				} else {
-					// Guardar cambios
 					if (table.getCellEditor() != null) {
 						table.getCellEditor().stopCellEditing();
 					}
@@ -314,8 +303,6 @@ public class ListJuego extends JDialog {
 						String equipoVisitante = (String) model.getValueAt(selectedRow, 1);
 						String descripcion = (String) model.getValueAt(selectedRow, 2);
 						java.sql.Timestamp fechaHora = (java.sql.Timestamp) model.getValueAt(selectedRow, 3);
-
-						// Validaciones
 						if (equipoLocal == null || equipoLocal.trim().isEmpty() || equipoLocal.equals("")) {
 							JOptionPane.showMessageDialog(ListJuego.this, "Debe seleccionar un equipo local válido",
 									"Error", JOptionPane.ERROR_MESSAGE);
@@ -342,7 +329,6 @@ public class ListJuego extends JDialog {
 						}
 
 						try {
-							// Obtener IDs de los equipos
 							int idEquipoLocal = obtenerIdEquipoPorNombre(equipoLocal);
 							int idEquipoVisitante = obtenerIdEquipoPorNombre(equipoVisitante);
 
@@ -353,13 +339,11 @@ public class ListJuego extends JDialog {
 								return;
 							}
 
-							// Actualizar en la base de datos
 							actualizarJuego(juegoId, idEquipoLocal, idEquipoVisitante, descripcion, fechaHora);
 
 							JOptionPane.showMessageDialog(ListJuego.this, "Juego actualizado correctamente", "Éxito",
 									JOptionPane.INFORMATION_MESSAGE);
 
-							// Reset estado
 							resetUpdateMode();
 							loadJuegos();
 						} catch (Exception ex) {
@@ -406,7 +390,7 @@ public class ListJuego extends JDialog {
 			public void mouseEntered(MouseEvent e) {
 				if (detailbtn.isEnabled()) {
 					detailbtn.setBorder(new RoundedBorder(new Color(66, 165, 245), 1, 20));
-					detailbtn.setBackground(new Color(66, 165, 245)); // #42A5F5
+					detailbtn.setBackground(new Color(66, 165, 245));
 					detailbtn.setForeground(Color.BLACK);
 				}
 			}
@@ -468,7 +452,6 @@ public class ListJuego extends JDialog {
 		teamAcb.setModel(model);
 		teamBcb.setModel(modelVisitante);
 
-		// Agregar listeners para filtrar
 		teamAcb.addActionListener(e -> filtrarJuegos());
 		teamBcb.addActionListener(e -> filtrarJuegos());
 	}
@@ -477,7 +460,6 @@ public class ListJuego extends JDialog {
 		String equipoLocal = (String) teamAcb.getSelectedItem();
 		String equipoVisitante = (String) teamBcb.getSelectedItem();
 
-		// Si ambos combobox tienen la selección por defecto, mostrar todos los juegos
 		if (equipoLocal.equals("<Equipo Local>") && equipoVisitante.equals("<Equipo Visitante>")) {
 			loadJuegos();
 			return;
@@ -488,7 +470,6 @@ public class ListJuego extends JDialog {
 						+ "FROM Juego j " + "JOIN Equipo e1 ON j.Id_EquipoA_Local = e1.IdEquipo "
 						+ "JOIN Equipo e2 ON j.Id_EquipoB_Visitante = e2.IdEquipo ");
 
-		// Construir condiciones WHERE según las selecciones
 		if (!equipoLocal.equals("<Equipo Local>") && !equipoVisitante.equals("<Equipo Visitante>")) {
 			sql.append("WHERE e1.Nombre_Equipo = ? AND e2.Nombre_Equipo = ?");
 		} else if (!equipoLocal.equals("<Equipo Local>")) {
@@ -502,7 +483,6 @@ public class ListJuego extends JDialog {
 		try (Connection connection = SQLConnection.getConnection();
 				PreparedStatement stmt = connection.prepareStatement(sql.toString())) {
 
-			// Establecer parámetros según las selecciones
 			int paramIndex = 1;
 			if (!equipoLocal.equals("<Equipo Local>") && !equipoVisitante.equals("<Equipo Visitante>")) {
 				stmt.setString(paramIndex++, equipoLocal);
@@ -514,7 +494,7 @@ public class ListJuego extends JDialog {
 			}
 
 			ResultSet rs = stmt.executeQuery();
-			model.setRowCount(0); // Limpiar tabla
+			model.setRowCount(0);
 
 			while (rs.next()) {
 				Object[] row = { rs.getString("Local"), rs.getString("Visitante"), rs.getString("Descripcion"),
@@ -529,7 +509,7 @@ public class ListJuego extends JDialog {
 	}
 
 	private void loadJuegos() {
-		model.setRowCount(0); // Limpiar tabla
+		model.setRowCount(0);
 
 		try (Connection connection = SQLConnection.getConnection();
 				Statement stmt = connection.createStatement();
@@ -552,18 +532,14 @@ public class ListJuego extends JDialog {
 
 	private void makeTableEditable() {
 		try {
-			// Detener cualquier edición activa primero
 			if (table.getCellEditor() != null) {
 				table.getCellEditor().cancelCellEditing();
 			}
 
-			// Crear ComboBox para equipos locales
 			JComboBox<String> equipoLocalComboBox = new JComboBox<>();
 
-			// Crear ComboBox para equipos visitantes
 			JComboBox<String> equipoVisitanteComboBox = new JComboBox<>();
 
-			// Cargar equipos desde la base de datos (SIN elementos vacíos)
 			try (Connection connection = SQLConnection.getConnection();
 					Statement stmt = connection.createStatement();
 					ResultSet rs = stmt.executeQuery("SELECT Nombre_Equipo FROM Equipo ORDER BY Nombre_Equipo")) {
@@ -577,18 +553,19 @@ public class ListJuego extends JDialog {
 				e.printStackTrace();
 			}
 
-			// Crear Spinner para fecha y hora con el mismo formato que RegJuego
 			JSpinner fechaSpinner = new JSpinner();
 			fechaSpinner.setFont(new Font("Century Gothic", Font.PLAIN, 16));
 			fechaSpinner.setModel(new SpinnerDateModel(new java.util.Date(), null, null, Calendar.MINUTE));
 
-			// Establece el formato de fecha y hora igual que in RegJuego
 			JSpinner.DateEditor editor = new JSpinner.DateEditor(fechaSpinner, "dd/MM/yyyy HH:mm");
 			fechaSpinner.setEditor(editor);
 
-			// Crear editor personalizado para el spinner de fecha
 			javax.swing.DefaultCellEditor fechaEditor = new javax.swing.DefaultCellEditor(
 					new javax.swing.JTextField()) {
+				/**
+						 * 
+						 */
+				private static final long serialVersionUID = 1L;
 				private JSpinner spinner;
 				private JSpinner.DefaultEditor spinnerEditor;
 
@@ -603,7 +580,6 @@ public class ListJuego extends JDialog {
 					spinner.setEditor(dateEditor);
 					spinnerEditor = dateEditor;
 
-					// Si hay un valor existente, establecerlo en el spinner
 					if (value instanceof java.sql.Timestamp) {
 						spinner.setValue(new java.util.Date(((java.sql.Timestamp) value).getTime()));
 					} else if (value instanceof java.util.Date) {
@@ -630,7 +606,6 @@ public class ListJuego extends JDialog {
 				}
 			};
 
-			// Configurar editores personalizados para cada columna
 			table.getColumnModel().getColumn(0).setCellEditor(new javax.swing.DefaultCellEditor(equipoLocalComboBox) {
 				@Override
 				public boolean isCellEditable(java.util.EventObject e) {
@@ -654,7 +629,6 @@ public class ListJuego extends JDialog {
 						}
 					});
 
-			// Usar el editor personalizado del spinner para la columna de fecha
 			table.getColumnModel().getColumn(3).setCellEditor(fechaEditor);
 
 		} catch (Exception e) {
@@ -669,12 +643,10 @@ public class ListJuego extends JDialog {
 		updatebtn.setText("Actualizar");
 		returnbtn.setText("Retornar");
 
-		// IMPORTANTE: Detener cualquier edición activa antes de limpiar editores
 		if (table.getCellEditor() != null) {
 			table.getCellEditor().cancelCellEditing();
 		}
 
-		// Limpiar editores personalizados
 		table.setDefaultEditor(Object.class, null);
 		if (table.getColumnCount() > 0) {
 			table.getColumnModel().getColumn(0).setCellEditor(null);
@@ -689,7 +661,6 @@ public class ListJuego extends JDialog {
 			table.getColumnModel().getColumn(3).setCellEditor(null);
 		}
 
-		// Limpiar selección
 		table.clearSelection();
 
 		deletebtn.setEnabled(false);
@@ -700,7 +671,6 @@ public class ListJuego extends JDialog {
 	}
 
 	private void cancelUpdateMode() {
-		// Detener edición ANTES de resetear
 		if (table.getCellEditor() != null) {
 			table.getCellEditor().cancelCellEditing();
 		}
@@ -753,38 +723,34 @@ public class ListJuego extends JDialog {
 			connection = SQLConnection.getConnection();
 			connection.setAutoCommit(false);
 
-			// Formatear los IDs de equipos con ceros a la izquierda
 			String idEquipoLocalFormatted = String.format("%02d", idEquipoLocal).trim();
 			String idEquipoVisitanteFormatted = String.format("%02d", idEquipoVisitante).trim();
 
-			// 1. Verificar que ambos equipos existen
 			String verificarEquipo = "SELECT COUNT(*) FROM Equipo WHERE IdEquipo = ?";
 			try (PreparedStatement stmtVerificar = connection.prepareStatement(verificarEquipo)) {
-				stmtVerificar.setString(1, idEquipoLocalFormatted); // Usar String formateado
+				stmtVerificar.setString(1, idEquipoLocalFormatted);
 				ResultSet rs1 = stmtVerificar.executeQuery();
 				rs1.next();
 				if (rs1.getInt(1) == 0) {
 					throw new SQLException("El equipo local con ID " + idEquipoLocalFormatted + " no existe");
 				}
 
-				stmtVerificar.setString(1, idEquipoVisitanteFormatted); // Usar String formateado
+				stmtVerificar.setString(1, idEquipoVisitanteFormatted);
 				ResultSet rs2 = stmtVerificar.executeQuery();
 				rs2.next();
 				if (rs2.getInt(1) == 0) {
 					throw new SQLException("El equipo visitante con ID " + idEquipoVisitanteFormatted + " no existe");
 				}
 			}
-
-			// 2. Actualizar juego
 			String sql = "UPDATE Juego SET Id_EquipoA_Local = ?, Id_EquipoB_Visitante = ?, "
 					+ "Descripcion = ?, Fecha_Hora = ? WHERE IdJuego = ?";
 
 			try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-				stmt.setString(1, idEquipoLocalFormatted); // Usar String formateado
-				stmt.setString(2, idEquipoVisitanteFormatted); // Usar String formateado
+				stmt.setString(1, idEquipoLocalFormatted);
+				stmt.setString(2, idEquipoVisitanteFormatted);
 				stmt.setString(3, descripcion);
 				stmt.setTimestamp(4, fechaHora);
-				stmt.setInt(5, idJuego); // IdJuego se mantiene como int
+				stmt.setInt(5, idJuego);
 
 				int filasActualizadas = stmt.executeUpdate();
 				if (filasActualizadas == 0) {
@@ -792,7 +758,6 @@ public class ListJuego extends JDialog {
 				}
 			}
 
-			// 3. Commit
 			connection.commit();
 
 		} catch (SQLException e) {
@@ -822,7 +787,6 @@ public class ListJuego extends JDialog {
 			connection = SQLConnection.getConnection();
 			connection.setAutoCommit(false);
 
-			// 1. Verificar que el juego existe antes de eliminarlo
 			String verificarSql = "SELECT COUNT(*) FROM Juego WHERE IdJuego = ?";
 			try (PreparedStatement stmtVerificar = connection.prepareStatement(verificarSql)) {
 				stmtVerificar.setInt(1, idJuego);
@@ -833,14 +797,12 @@ public class ListJuego extends JDialog {
 				}
 			}
 
-			// 2. Eliminar primero las estadísticas del juego (si existen)
 			String deleteEstadisticasSql = "DELETE FROM [dbo].[Estadistica de Juego] WHERE idJuego = ?";
 			try (PreparedStatement stmtEstadisticas = connection.prepareStatement(deleteEstadisticasSql)) {
 				stmtEstadisticas.setInt(1, idJuego);
 				stmtEstadisticas.executeUpdate();
 			}
 
-			// 3. Eliminar el juego
 			String deleteJuegoSql = "DELETE FROM Juego WHERE IdJuego = ?";
 			try (PreparedStatement stmtJuego = connection.prepareStatement(deleteJuegoSql)) {
 				stmtJuego.setInt(1, idJuego);
@@ -851,7 +813,6 @@ public class ListJuego extends JDialog {
 				}
 			}
 
-			// 4. Commit de la transacción
 			connection.commit();
 
 		} catch (SQLException e) {

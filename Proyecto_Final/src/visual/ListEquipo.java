@@ -43,7 +43,7 @@ public class ListEquipo extends JDialog {
 	private static final Color PrimaryC = new Color(3, 88, 157);
 	private static final Color SecondaryC = new Color(3, 104, 196);
 	private static final Color ThirdC = new Color(247, 251, 255);
-	private static final Color AccentColor = new Color(247, 109, 71); // 255, 150, 95
+	private static final Color AccentColor = new Color(247, 109, 71);
 	private static final Color AccentHoverColor = new Color(255, 136, 73);
 	private static final Color BGC = new Color(236, 240, 241);
 	private static final Color TextColor = new Color(52, 73, 94);
@@ -66,14 +66,10 @@ public class ListEquipo extends JDialog {
 	private JButton deletebtn;
 	private JButton updatebtn;
 	private JButton addbtn;
-	private JButton cancelbtn; // Nueva variable para el botón cancelar
 	private JTextField equpotxt;
 	private boolean isAddingNewRow = false;
 	private boolean isUpdatingRow = false;
 
-	/**
-	 * Launch the application.
-	 */
 	public static void main(String[] args) {
 		try {
 			ListEquipo dialog = new ListEquipo();
@@ -84,9 +80,6 @@ public class ListEquipo extends JDialog {
 		}
 	}
 
-	/**
-	 * Create the dialog.
-	 */
 	public ListEquipo() {
 		setUndecorated(true);
 		setBounds(100, 100, 1349, 704);
@@ -106,9 +99,8 @@ public class ListEquipo extends JDialog {
 				public void mouseClicked(MouseEvent e) {
 					int ind = table.getSelectedRow();
 					if (ind >= 0) {
-						equipo = (String) table.getValueAt(ind, 0); // Nombre del equipo
+						equipo = (String) table.getValueAt(ind, 0);
 
-						// Necesitas obtener el ID del equipo de la controladora
 						try {
 							Controladora controladora = Controladora.getInstance();
 							for (Equipo eq : controladora.getMisEquipos()) {
@@ -203,7 +195,7 @@ public class ListEquipo extends JDialog {
 						try {
 							Controladora controladora = Controladora.getInstance();
 							controladora.cargarEquiposFromDB();
-							controladora.cargarCiudadesFromDB(); // Asegurar que las ciudades estén cargadas
+							controladora.cargarCiudadesFromDB();
 
 							model.setRowCount(0);
 
@@ -212,14 +204,11 @@ public class ListEquipo extends JDialog {
 									Ciudad ciudad = controladora.searchCiudadByCod(equipoItem.getIdCiudad());
 									String nombreCiudad = ciudad != null ? ciudad.getNombre() : "N/A";
 
-									Object[] row = { equipoItem.getNombreString(), // Nombre del equipo
-											nombreCiudad // Nombre de la ciudad
-									};
+									Object[] row = { equipoItem.getNombreString(), nombreCiudad };
 									model.addRow(row);
 								}
 							}
 
-							// Mostrar mensaje si no se encontraron resultados
 							if (model.getRowCount() == 0) {
 								JOptionPane.showMessageDialog(ListEquipo.this,
 										"No se encontraron equipos que coincidan con: " + nombre, "Sin resultados",
@@ -262,10 +251,8 @@ public class ListEquipo extends JDialog {
 				returnbtn.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						if (isAddingNewRow) {
-							// Si se está agregando una nueva fila, cancelar la operación
 							cancelAddMode();
 						} else {
-							// Comportamiento normal: cerrar la ventana
 							dispose();
 						}
 					}
@@ -294,7 +281,7 @@ public class ListEquipo extends JDialog {
 
 									JOptionPane.showMessageDialog(ListEquipo.this, "Equipo eliminado correctamente",
 											"Éxito", JOptionPane.INFORMATION_MESSAGE);
-									loadEquipos(); // Actualizar la tabla
+									loadEquipos();
 									deletebtn.setEnabled(false);
 									updatebtn.setEnabled(false);
 								} catch (Exception ex) {
@@ -339,19 +326,17 @@ public class ListEquipo extends JDialog {
 						if (!isUpdatingRow) {
 							int selectedRow = table.getSelectedRow();
 							if (selectedRow != -1) {
-								makeTableEditable(); // Ya tienes esta función implementada
-								table.editCellAt(selectedRow, 0); // Empieza edición en la columna nombre
+								makeTableEditable();
+								table.editCellAt(selectedRow, 0);
 								updatebtn.setText("Guardar");
 								returnbtn.setText("Cancelar");
 								isUpdatingRow = true;
 
-								// Deshabilitar otros botones
 								addbtn.setEnabled(false);
 								deletebtn.setEnabled(false);
 								searchbtn.setEnabled(false);
 							}
 						} else {
-							// Guardar cambios
 							if (table.getCellEditor() != null) {
 								table.getCellEditor().stopCellEditing();
 							}
@@ -386,7 +371,6 @@ public class ListEquipo extends JDialog {
 									JOptionPane.showMessageDialog(ListEquipo.this, "Equipo actualizado correctamente",
 											"Éxito", JOptionPane.INFORMATION_MESSAGE);
 
-									// Reset estado
 									resetUpdateMode();
 									loadEquipos();
 								} catch (Exception ex) {
@@ -448,7 +432,6 @@ public class ListEquipo extends JDialog {
 				addbtn.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						if (!isAddingNewRow) {
-							// Modo Agregar
 							try {
 								Controladora controladora = Controladora.getInstance();
 								controladora.cargarCiudadesFromDB();
@@ -460,7 +443,6 @@ public class ListEquipo extends JDialog {
 									return;
 								}
 
-								// Agregar nueva fila
 								Object[] newRow = { "Nuevo Equipo", controladora.getMisCiudades().get(0).getNombre() };
 								model.addRow(newRow);
 
@@ -470,7 +452,6 @@ public class ListEquipo extends JDialog {
 								table.setRowSelectionInterval(newRowIndex, newRowIndex);
 								table.editCellAt(newRowIndex, 0);
 
-								// Cambiar el estado de los botones
 								addbtn.setText("Guardar");
 								returnbtn.setText("Cancelar");
 								isAddingNewRow = true;
@@ -478,24 +459,13 @@ public class ListEquipo extends JDialog {
 								deletebtn.setEnabled(false);
 								searchbtn.setEnabled(false);
 
-								// Ocultar el botón cancelar original y mostrar el comportamiento en retornar
-								if (cancelbtn != null) {
-									cancelbtn.setVisible(false);
-								}
-
 							} catch (Exception ex) {
 								JOptionPane.showMessageDialog(ListEquipo.this, "Error: " + ex.getMessage(), "Error",
 										JOptionPane.ERROR_MESSAGE);
 							}
 
-						} // Reemplaza la parte del código donde guardas el equipo (líneas ~547 en
-							// adelante)
-						// En el ActionListener del botón "Guardar" dentro del else:
-
-						else {
-							// Modo Guardar
+						} else {
 							try {
-								// Detener cualquier edición en curso
 								if (table.getCellEditor() != null) {
 									table.getCellEditor().stopCellEditing();
 								}
@@ -510,18 +480,8 @@ public class ListEquipo extends JDialog {
 											JOptionPane.ERROR_MESSAGE);
 									return;
 								}
-
-								// Encontrar el ID de la ciudad - MEJORADO CON VALIDACIONES
 								Controladora controladora = Controladora.getInstance();
-								controladora.cargarCiudadesFromDB(); // Asegurar que las ciudades estén cargadas
-
-								// Debug: mostrar ciudades disponibles
-								System.out.println("=== DEBUG: Ciudades disponibles ===");
-								for (Ciudad ciudad : controladora.getMisCiudades()) {
-									System.out.println(
-											"Ciudad: " + ciudad.getNombre() + ", ID: " + ciudad.getCodCiudad());
-								}
-								System.out.println("Ciudad buscada: " + nombreCiudad);
+								controladora.cargarCiudadesFromDB();
 
 								Ciudad ciudadSeleccionada = null;
 								for (Ciudad ciudad : controladora.getMisCiudades()) {
@@ -539,7 +499,6 @@ public class ListEquipo extends JDialog {
 									return;
 								}
 
-								// VALIDACIÓN ADICIONAL: Verificar que el ID de ciudad existe en la BD
 								boolean ciudadExisteEnBD = verificarCiudadEnBD(ciudadSeleccionada.getCodCiudad());
 								if (!ciudadExisteEnBD) {
 									JOptionPane.showMessageDialog(ListEquipo.this,
@@ -549,13 +508,6 @@ public class ListEquipo extends JDialog {
 									return;
 								}
 
-								// Debug para verificar los datos antes de insertar
-								System.out.println("=== DEBUG: Datos del equipo a insertar ===");
-								System.out.println("Nombre: " + nombreEquipo.trim());
-								System.out.println("Ciudad seleccionada: " + ciudadSeleccionada.getNombre());
-								System.out.println("ID Ciudad: " + ciudadSeleccionada.getCodCiudad());
-
-								// Verificar si ya existe un equipo con el mismo nombre
 								for (Equipo equipoExistente : controladora.getMisEquipos()) {
 									if (equipoExistente.getNombreString().equalsIgnoreCase(nombreEquipo.trim())) {
 										JOptionPane.showMessageDialog(ListEquipo.this,
@@ -564,8 +516,6 @@ public class ListEquipo extends JDialog {
 										return;
 									}
 								}
-
-								// Crear y guardar el nuevo equipo
 								Equipo nuevoEquipo = new Equipo(0, nombreEquipo.trim(),
 										ciudadSeleccionada.getCodCiudad());
 								controladora.insertarEquipo(nuevoEquipo);
@@ -573,9 +523,8 @@ public class ListEquipo extends JDialog {
 								JOptionPane.showMessageDialog(ListEquipo.this, "Equipo agregado correctamente", "Éxito",
 										JOptionPane.INFORMATION_MESSAGE);
 
-								// Resetear la interfaz
 								resetAddMode();
-								loadEquipos(); // Recargar la tabla
+								loadEquipos();
 
 							} catch (Exception ex) {
 								JOptionPane.showMessageDialog(ListEquipo.this,
@@ -583,7 +532,6 @@ public class ListEquipo extends JDialog {
 										JOptionPane.ERROR_MESSAGE);
 								ex.printStackTrace();
 
-								// En caso de error, también resetear para evitar estado inconsistente
 								resetAddMode();
 								loadEquipos();
 							}
@@ -598,70 +546,23 @@ public class ListEquipo extends JDialog {
 				addbtn.setBounds(22, 494, 169, 40);
 				panel.add(addbtn);
 			}
-			{
-				cancelbtn = new JButton("Cancelar");
-				cancelbtn.addActionListener(new ActionListener() {
-					public void actionPerformed(ActionEvent e) {
-						if (isAddingNewRow) {
-							cancelAddMode();
-						} else if (isUpdatingRow) {
-							cancelUpdateMode();
-						} else {
-							dispose();
-						}
-					}
-				});
-
-				cancelbtn.addMouseListener(new MouseAdapter() {
-					@Override
-					public void mouseEntered(MouseEvent e) {
-						if (isAddingNewRow) {
-							cancelbtn.setBackground(new Color(220, 53, 69));
-							cancelbtn.setForeground(Color.white);
-							cancelbtn.setBorder(new RoundedBorder(new Color(220, 53, 69), 1, 20));
-						}
-					}
-
-					@Override
-					public void mouseExited(MouseEvent e) {
-						cancelbtn.setBorder(new RoundedBorder(SecondaryC, 1, 20));
-						cancelbtn.setBackground(new Color(248, 248, 248));
-						cancelbtn.setForeground(SecondaryC);
-					}
-				});
-				cancelbtn.setBorder(new RoundedBorder(SecondaryC, 1, 20));
-				cancelbtn.setBackground(new Color(248, 248, 248));
-				cancelbtn.setForeground(SecondaryC);
-				cancelbtn.setOpaque(true);
-				cancelbtn.setFont(new Font("century gothic", Font.BOLD, 18));
-				cancelbtn.setBounds(22, 441, 169, 40);
-				cancelbtn.setVisible(false); // Inicialmente oculto
-				panel.add(cancelbtn);
-			}
+			loadEquipos();
 		}
-		loadEquipos();
 	}
 
 	public void loadEquipos() {
-		model.setRowCount(0); // Limpiar la tabla
+		model.setRowCount(0);
 
 		try {
 			Controladora controladora = Controladora.getInstance();
-			controladora.cargarEquiposFromDB(); // Load data from database
-			controladora.cargarCiudadesFromDB(); // Load cities for names
-
-			System.out.println("Loading equipos - found: " + controladora.getMisEquipos().size()); // Debug
+			controladora.cargarEquiposFromDB();
+			controladora.cargarCiudadesFromDB();
 
 			for (Equipo equipo : controladora.getMisEquipos()) {
 				Ciudad ciudad = controladora.searchCiudadByCod(equipo.getIdCiudad());
 				String nombreCiudad = ciudad != null ? ciudad.getNombre() : "N/A";
 
-				System.out
-						.println("Adding equipo to table: Name=" + equipo.getNombreString() + ", City=" + nombreCiudad); // Debug
-
-				Object[] row = { equipo.getNombreString(), // Solo nombre del equipo
-						nombreCiudad // Solo nombre de la ciudad
-				};
+				Object[] row = { equipo.getNombreString(), nombreCiudad };
 				model.addRow(row);
 			}
 
@@ -683,17 +584,14 @@ public class ListEquipo extends JDialog {
 		try {
 			Controladora controladora = Controladora.getInstance();
 
-			// Crear un ComboBox con las ciudades disponibles
 			JComboBox<String> ciudadComboBox = new JComboBox<>();
 			for (Ciudad ciudad : controladora.getMisCiudades()) {
 				ciudadComboBox.addItem(ciudad.getNombre());
 			}
 
-			// Configurar editores personalizados para cada columna
 			table.getColumnModel().getColumn(0).setCellEditor(new DefaultCellEditor(new JTextField()));
 			table.getColumnModel().getColumn(1).setCellEditor(new DefaultCellEditor(ciudadComboBox));
 
-			// Hacer que solo sea editable cuando se está agregando
 			table.setDefaultEditor(Object.class, new DefaultCellEditor(new JTextField()) {
 				@Override
 				public boolean isCellEditable(java.util.EventObject e) {
@@ -701,7 +599,6 @@ public class ListEquipo extends JDialog {
 				}
 			});
 
-			// Editor especial para la columna de ciudad
 			table.getColumnModel().getColumn(1).setCellEditor(new DefaultCellEditor(ciudadComboBox) {
 				@Override
 				public boolean isCellEditable(java.util.EventObject e) {
@@ -716,28 +613,19 @@ public class ListEquipo extends JDialog {
 
 	private void resetAddMode() {
 		addbtn.setText("Agregar");
-		returnbtn.setText("Retornar"); // Restaurar texto original del botón retornar
+		returnbtn.setText("Retornar");
 		isAddingNewRow = false;
 
-		// Hacer la tabla no editable nuevamente
 		table.setDefaultEditor(Object.class, null);
 		table.getColumnModel().getColumn(0).setCellEditor(null);
 		table.getColumnModel().getColumn(1).setCellEditor(null);
 
-		// Rehabilitar botones
 		searchbtn.setEnabled(true);
 		updatebtn.setEnabled(false);
 		deletebtn.setEnabled(false);
-
-		// Mostrar el botón cancelar original si existe
-		if (cancelbtn != null) {
-			cancelbtn.setVisible(false);
-		}
 	}
 
-	// Nuevo método para manejar la cancelación
 	private void cancelAddMode() {
-		// Remover la última fila (la que se está agregando)
 		int lastRow = model.getRowCount() - 1;
 		if (lastRow >= 0 && isAddingNewRow) {
 			model.removeRow(lastRow);
@@ -759,25 +647,16 @@ public class ListEquipo extends JDialog {
 		deletebtn.setEnabled(false);
 	}
 
-	private void cancelUpdateMode() {
-		resetUpdateMode();
-		loadEquipos();
-	}
-
-	/**
-	 * Verifica si una ciudad con el ID dado existe en la base de datos
-	 */
 	private boolean verificarCiudadEnBD(int idCiudad) {
 		try {
 			SQLConnection dbConnection = new SQLConnection();
 			Connection connection = dbConnection.getConnection();
 
-			// Formatear el ID con cero a la izquierda
 			String idCiudadFormatted = String.format("%02d", idCiudad);
 
 			String query = "SELECT COUNT(*) FROM Ciudad WHERE IdCiudad = ?";
 			PreparedStatement stmt = connection.prepareStatement(query);
-			stmt.setString(1, idCiudadFormatted); // Usar String formateado
+			stmt.setString(1, idCiudadFormatted);
 
 			java.sql.ResultSet rs = stmt.executeQuery();
 

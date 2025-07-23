@@ -40,7 +40,7 @@ public class Principal extends JFrame {
 	private final int PANEL_WIDTH = 350;
 	private final int PANEL_HEIGHT = 350;
 	private final int PANEL_GAP = 24;
-	
+
 	private static final long serialVersionUID = 1L;
 	private JPanel contentPane;
 	private JButton jugador;
@@ -55,11 +55,11 @@ public class Principal extends JFrame {
 	private JButton listaEstadisticabttn;
 	private JPanel panelCiudad;
 	private JButton btnListCiudad;
-	
+
 	private static final Color PrimaryC = new Color(3, 88, 157);
 	private static final Color SecondaryC = new Color(213, 234, 255);
 	private static final Color ThirdC = new Color(247, 251, 255);
-	private static final Color AccentColor = new Color(247, 109, 71); //255, 150, 95
+	private static final Color AccentColor = new Color(247, 109, 71);
 	private static final Color AccentHoverColor = new Color(255, 136, 73);
 	private static final Color BGC = new Color(236, 240, 241);
 	private static final Color TextColor = new Color(52, 73, 94);
@@ -67,7 +67,7 @@ public class Principal extends JFrame {
 	private static final Color ButtonColor = new Color(42, 145, 230);
 	private static final Color ButtonBorderColor = new Color(42, 145, 230);
 	private static final Color HoverEffevtColor = new Color(71, 168, 247);
-	
+
 	private Boolean menuJugador = false;
 	private Boolean menuEquipo = false;
 	private Boolean menuEstadistica = false;
@@ -78,7 +78,7 @@ public class Principal extends JFrame {
 	private JButton listJuegobttn;
 	private JButton RegJuegobttn;
 	private JPanel panelJugadores;
-	
+
 	/**
 	 * Launch the application.
 	 */
@@ -99,55 +99,56 @@ public class Principal extends JFrame {
 	 * Create the frame.
 	 */
 	public Principal() {
-	
+
 		setType(Type.UTILITY);
-		
+
 		setResizable(false);
 		setBounds(0, 0, 1950, 991);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		
+
 		dim = getToolkit().getScreenSize();
 		setSize(dim);
-		
-		
+
 		getContentPane().setLayout(new BorderLayout());
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
-		
+
 		JPanel panel = new JPanel();
 		panel.setBounds(0, 11, 1914, 1045);
 		panel.setBackground(Color.WHITE);
 		contentPane.add(panel);
 		panel.setLayout(null);
-		
+
 		JPanel PanelPrincipal = new JPanel();
 		PanelPrincipal.setBounds(0, 0, 356, 1040);
 		PanelPrincipal.setBackground(SecondaryC);
 		panel.add(PanelPrincipal);
 		PanelPrincipal.setLayout(null);
-		
+
 		panelJugadores = new JPanel();
 		panelJugadores.setBounds(0, 198, 344, 152);
-		MoveToXY panelJugadoresHide = new MoveToXY(panelJugadores, 0, panelJugadores.getY(),  0.5f, AnimationType.EASE_OUT);
-		MoveToXY panelJugadoresShow = new MoveToXY(panelJugadores, 354, panelJugadores.getY(), 0.5f, AnimationType.EASE_IN);
+		MoveToXY panelJugadoresHide = new MoveToXY(panelJugadores, 0, panelJugadores.getY(), 0.5f,
+				AnimationType.EASE_OUT);
+		MoveToXY panelJugadoresShow = new MoveToXY(panelJugadores, 354, panelJugadores.getY(), 0.5f,
+				AnimationType.EASE_IN);
 		panelJugadores.setVisible(false);
 		panelJugadores.setBackground(ButtonColor);
 		panelJugadores.setBorder(new RoundedBorder(ButtonColor, 1, 20));
 		panel.add(panelJugadores);
 		panelJugadores.setLayout(null);
-		
+
 		panelEquipos = new JPanel();
 		panelEquipos.setLayout(null);
 		MoveToXY panelEquipoHide = new MoveToXY(panelEquipos, 0, 287, 0.5f, AnimationType.EASE_OUT);
-		MoveToXY panelEquipoShow = new MoveToXY(panelEquipos, 354, 287, 0.5f, AnimationType.EASE_IN); 
+		MoveToXY panelEquipoShow = new MoveToXY(panelEquipos, 354, 287, 0.5f, AnimationType.EASE_IN);
 		panelEquipos.setVisible(false);
 		panelEquipos.setBackground(ButtonColor);
 		panelEquipos.setBorder(new RoundedBorder(ButtonColor, 1, 20));
 		panelEquipos.setBounds(0, 287, 344, 76);
 		panel.add(panelEquipos);
-		
+
 		panelCiudad = new JPanel();
 		panelCiudad.setLayout(null);
 		panelCiudad.setBounds(0, 465, 344, 76);
@@ -157,7 +158,7 @@ public class Principal extends JFrame {
 		panelCiudad.setBackground(ButtonColor);
 		panelCiudad.setBorder(new RoundedBorder(ButtonColor, 1, 20));
 		panel.add(panelCiudad);
-		
+
 		panelJuego = new JPanel();
 		panelJuego.setBounds(0, 542, 344, 152);
 		panel.add(panelJuego);
@@ -167,37 +168,41 @@ public class Principal extends JFrame {
 		panelJuego.setBackground(ButtonColor);
 		panelJuego.setBorder(new RoundedBorder(ButtonColor, 1, 20));
 		panelJuego.setLayout(null);
-		
+
 		panelEstadistica = new JPanel();
 		panelEstadistica.setBounds(0, 369, 344, 76);
 		panel.add(panelEstadistica);
-		MoveToXY panelEstadisticaHide = new MoveToXY(panelEstadistica, 0, panelEstadistica.getY(), 0.5f, AnimationType.EASE_OUT);
-		MoveToXY panelEstadisticaShow = new MoveToXY(panelEstadistica, 354, panelEstadistica.getY(), 0.5f, AnimationType.EASE_IN);
+		MoveToXY panelEstadisticaHide = new MoveToXY(panelEstadistica, 0, panelEstadistica.getY(), 0.5f,
+				AnimationType.EASE_OUT);
+		MoveToXY panelEstadisticaShow = new MoveToXY(panelEstadistica, 354, panelEstadistica.getY(), 0.5f,
+				AnimationType.EASE_IN);
 		panelEstadistica.setVisible(false);
 		panelEstadistica.setBackground(ButtonColor);
 		panelEstadistica.setBorder(new RoundedBorder(ButtonColor, 1, 20));
 		panelEstadistica.setLayout(null);
-		
-		
+
 		jugador = new JButton("Jugadores");
 		jugador.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseEntered(MouseEvent e) {
 				jugador.setBackground(HoverEffevtColor);
-				jugador.setBorder(new CompoundBorder(new RoundedBorder(HoverEffevtColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+				jugador.setBorder(
+						new CompoundBorder(new RoundedBorder(HoverEffevtColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 			}
+
 			@Override
 			public void mouseExited(MouseEvent e) {
 				jugador.setBackground(ButtonColor);
-				jugador.setBorder(new CompoundBorder(new RoundedBorder(ButtonColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+				jugador.setBorder(
+						new CompoundBorder(new RoundedBorder(ButtonColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 			}
 		});
 		jugador.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(!menuJugador) {
-					abrirMenuJugador(panelJugadoresShow, panelEquipoHide, panelJuegoHide, panelEstadisticaHide, panelCiudadHide);
-				}
-				else {
+				if (!menuJugador) {
+					abrirMenuJugador(panelJugadoresShow, panelEquipoHide, panelJuegoHide, panelEstadisticaHide,
+							panelCiudadHide);
+				} else {
 					cerrarMenuJugador(panelJugadoresHide);
 				}
 			}
@@ -207,14 +212,16 @@ public class Principal extends JFrame {
 		jugador.setBackground(ButtonColor);
 		jugador.setForeground(Color.WHITE);
 		jugador.setFont(new Font("Tahoma", Font.BOLD, 24));
-		jugador.setBorder(new CompoundBorder(new RoundedBorder(ButtonBorderColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+		jugador.setBorder(
+				new CompoundBorder(new RoundedBorder(ButtonBorderColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 		PanelPrincipal.add(jugador);
-		
+
 		Teambttn = new JButton("Equipos");
 		Teambttn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(!menuEquipo) {
-					abrirMenuEquipos(panelJugadoresHide, panelEquipoShow, panelJuegoHide, panelEstadisticaHide, panelCiudadHide);
+				if (!menuEquipo) {
+					abrirMenuEquipos(panelJugadoresHide, panelEquipoShow, panelJuegoHide, panelEstadisticaHide,
+							panelCiudadHide);
 				} else {
 					cerrarMenuEquipo(panelEquipoHide);
 				}
@@ -224,12 +231,15 @@ public class Principal extends JFrame {
 			@Override
 			public void mouseEntered(MouseEvent e) {
 				Teambttn.setBackground(HoverEffevtColor);
-				Teambttn.setBorder(new CompoundBorder(new RoundedBorder(HoverEffevtColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+				Teambttn.setBorder(
+						new CompoundBorder(new RoundedBorder(HoverEffevtColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 			}
+
 			@Override
 			public void mouseExited(MouseEvent e) {
 				Teambttn.setBackground(ButtonColor);
-				Teambttn.setBorder(new CompoundBorder(new RoundedBorder(ButtonColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+				Teambttn.setBorder(
+						new CompoundBorder(new RoundedBorder(ButtonColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 			}
 		});
 		Teambttn.setFocusPainted(false);
@@ -237,31 +247,36 @@ public class Principal extends JFrame {
 		Teambttn.setForeground(Color.WHITE);
 		Teambttn.setHorizontalAlignment(SwingConstants.CENTER);
 		Teambttn.setFont(new Font("Tahoma", Font.BOLD, 24));
-		Teambttn.setBorder(new CompoundBorder(new RoundedBorder(ButtonBorderColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+		Teambttn.setBorder(
+				new CompoundBorder(new RoundedBorder(ButtonBorderColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 		Teambttn.setBounds(12, 280, 332, 76);
 		PanelPrincipal.add(Teambttn);
-		
+
 		ciudadbttn = new JButton("Ciudad");
 		ciudadbttn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(!menuCiudad) {
-					abrirMenuCiudad(panelJugadoresHide, panelEquipoHide, panelJuegoHide, panelEstadisticaHide, panelCiudadShow);
+				if (!menuCiudad) {
+					abrirMenuCiudad(panelJugadoresHide, panelEquipoHide, panelJuegoHide, panelEstadisticaHide,
+							panelCiudadShow);
 				} else {
 					cerrarMenuCiudad(panelCiudadHide);
 				}
-				
+
 			}
 		});
 		ciudadbttn.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseEntered(MouseEvent e) {
 				ciudadbttn.setBackground(HoverEffevtColor);
-				ciudadbttn.setBorder(new CompoundBorder(new RoundedBorder(HoverEffevtColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+				ciudadbttn.setBorder(
+						new CompoundBorder(new RoundedBorder(HoverEffevtColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 			}
+
 			@Override
 			public void mouseExited(MouseEvent e) {
 				ciudadbttn.setBackground(ButtonColor);
-				ciudadbttn.setBorder(new CompoundBorder(new RoundedBorder(ButtonColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+				ciudadbttn.setBorder(
+						new CompoundBorder(new RoundedBorder(ButtonColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 
 			}
 		});
@@ -269,29 +284,33 @@ public class Principal extends JFrame {
 		ciudadbttn.setForeground(Color.white);
 		ciudadbttn.setHorizontalAlignment(SwingConstants.CENTER);
 		ciudadbttn.setFont(new Font("Tahoma", Font.BOLD, 24));
-		ciudadbttn.setBorder(new CompoundBorder(new RoundedBorder(ButtonBorderColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+		ciudadbttn.setBorder(
+				new CompoundBorder(new RoundedBorder(ButtonBorderColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 		ciudadbttn.setBounds(12, 458, 332, 76);
 		PanelPrincipal.add(ciudadbttn);
-		
+
 		Estadisticabttn = new JButton("Estadisticas");
 		Estadisticabttn.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseEntered(MouseEvent e) {
 				Estadisticabttn.setBackground(HoverEffevtColor);
-				Estadisticabttn.setBorder(new CompoundBorder(new RoundedBorder(HoverEffevtColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+				Estadisticabttn.setBorder(
+						new CompoundBorder(new RoundedBorder(HoverEffevtColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 			}
+
 			@Override
 			public void mouseExited(MouseEvent e) {
 				Estadisticabttn.setBackground(ButtonColor);
-				Estadisticabttn.setBorder(new CompoundBorder(new RoundedBorder(ButtonColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+				Estadisticabttn.setBorder(
+						new CompoundBorder(new RoundedBorder(ButtonColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 			}
 		});
 		Estadisticabttn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(!menuEstadistica) {
-					abrirMenuEstadistica(panelJugadoresHide, panelEquipoHide, panelJuegoHide, panelEstadisticaShow, panelCiudadHide);
-				}
-				else {
+				if (!menuEstadistica) {
+					abrirMenuEstadistica(panelJugadoresHide, panelEquipoHide, panelJuegoHide, panelEstadisticaShow,
+							panelCiudadHide);
+				} else {
 					cerrarMenuEstadistica(panelEstadisticaHide);
 				}
 			}
@@ -300,15 +319,17 @@ public class Principal extends JFrame {
 		Estadisticabttn.setForeground(Color.white);
 		Estadisticabttn.setHorizontalAlignment(SwingConstants.CENTER);
 		Estadisticabttn.setFont(new Font("Tahoma", Font.BOLD, 24));
-		Estadisticabttn.setBorder(new CompoundBorder(new RoundedBorder(ButtonBorderColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+		Estadisticabttn.setBorder(
+				new CompoundBorder(new RoundedBorder(ButtonBorderColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 		Estadisticabttn.setBounds(12, 369, 332, 76);
 		PanelPrincipal.add(Estadisticabttn);
-		
+
 		Juegobttn = new JButton("Juego");
 		Juegobttn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(!menuJuego) {
-					abrirMenuJuego(panelJugadoresHide, panelEquipoHide, panelJuegoShow, panelEstadisticaHide, panelCiudadHide);
+				if (!menuJuego) {
+					abrirMenuJuego(panelJugadoresHide, panelEquipoHide, panelJuegoShow, panelEstadisticaHide,
+							panelCiudadHide);
 				} else {
 					cerrarMenuJuego(panelJuegoHide);
 				}
@@ -318,22 +339,26 @@ public class Principal extends JFrame {
 			@Override
 			public void mouseEntered(MouseEvent e) {
 				Juegobttn.setBackground(HoverEffevtColor);
-				Juegobttn.setBorder(new CompoundBorder(new RoundedBorder(HoverEffevtColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+				Juegobttn.setBorder(
+						new CompoundBorder(new RoundedBorder(HoverEffevtColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 			}
+
 			@Override
 			public void mouseExited(MouseEvent e) {
 				Juegobttn.setBackground(ButtonColor);
-				Juegobttn.setBorder(new CompoundBorder(new RoundedBorder(ButtonColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+				Juegobttn.setBorder(
+						new CompoundBorder(new RoundedBorder(ButtonColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 			}
 		});
 		Juegobttn.setHorizontalAlignment(SwingConstants.CENTER);
 		Juegobttn.setForeground(Color.WHITE);
 		Juegobttn.setFont(new Font("Tahoma", Font.BOLD, 24));
-		Juegobttn.setBorder(new CompoundBorder(new RoundedBorder(ButtonBorderColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+		Juegobttn.setBorder(
+				new CompoundBorder(new RoundedBorder(ButtonBorderColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 		Juegobttn.setBackground(new Color(42, 145, 230));
 		Juegobttn.setBounds(12, 545, 332, 76);
 		PanelPrincipal.add(Juegobttn);
-		
+
 		regJugadobttn = new JButton("Reg. Jugador");
 		regJugadobttn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -349,18 +374,21 @@ public class Principal extends JFrame {
 		regJugadobttn.setBorder(new RoundedBorder(ButtonColor, 1, 20));
 		regJugadobttn.setFocusPainted(false);
 		panelJugadores.add(regJugadobttn);
-		
+
 		regJugadobttn.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseEntered(MouseEvent e) {
 				regJugadobttn.setBackground(HoverEffevtColor);
-				regJugadobttn.setBorder(new CompoundBorder(new RoundedBorder(HoverEffevtColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+				regJugadobttn.setBorder(
+						new CompoundBorder(new RoundedBorder(HoverEffevtColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 
 			}
+
 			@Override
 			public void mouseExited(MouseEvent e) {
 				regJugadobttn.setBackground(ButtonColor);
-				regJugadobttn.setBorder(new CompoundBorder(new RoundedBorder(ButtonColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+				regJugadobttn.setBorder(
+						new CompoundBorder(new RoundedBorder(ButtonColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 			}
 		});
 		listarJugadoresbttn = new JButton("List. Jugador");
@@ -378,21 +406,24 @@ public class Principal extends JFrame {
 		listarJugadoresbttn.setBorder(new RoundedBorder(ButtonColor, 1, 20));
 		listarJugadoresbttn.setFocusPainted(false);
 		panelJugadores.add(listarJugadoresbttn);
-		
+
 		listarJugadoresbttn.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseEntered(MouseEvent e) {
 				listarJugadoresbttn.setBackground(HoverEffevtColor);
-				listarJugadoresbttn.setBorder(new CompoundBorder(new RoundedBorder(HoverEffevtColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+				listarJugadoresbttn.setBorder(
+						new CompoundBorder(new RoundedBorder(HoverEffevtColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 
 			}
+
 			@Override
 			public void mouseExited(MouseEvent e) {
 				listarJugadoresbttn.setBackground(ButtonColor);
-				listarJugadoresbttn.setBorder(new CompoundBorder(new RoundedBorder(ButtonColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+				listarJugadoresbttn.setBorder(
+						new CompoundBorder(new RoundedBorder(ButtonColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 			}
 		});
-		
+
 		btnListEquipo = new JButton("List. Equipo");
 		btnListEquipo.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -408,21 +439,24 @@ public class Principal extends JFrame {
 		btnListEquipo.setBorder(new RoundedBorder(ButtonColor, 1, 20));
 		btnListEquipo.setFocusPainted(false);
 		panelEquipos.add(btnListEquipo);
-		
+
 		btnListEquipo.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseEntered(MouseEvent e) {
 				btnListEquipo.setBackground(HoverEffevtColor);
-				btnListEquipo.setBorder(new CompoundBorder(new RoundedBorder(HoverEffevtColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+				btnListEquipo.setBorder(
+						new CompoundBorder(new RoundedBorder(HoverEffevtColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 
 			}
+
 			@Override
 			public void mouseExited(MouseEvent e) {
 				btnListEquipo.setBackground(ButtonColor);
-				btnListEquipo.setBorder(new CompoundBorder(new RoundedBorder(ButtonColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+				btnListEquipo.setBorder(
+						new CompoundBorder(new RoundedBorder(ButtonColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 			}
 		});
-		
+
 		btnListCiudad = new JButton("List. Ciudad");
 		btnListCiudad.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -437,21 +471,24 @@ public class Principal extends JFrame {
 		btnListCiudad.setFont(new Font("Tahoma", Font.BOLD, 20));
 		btnListCiudad.setBorder(new RoundedBorder(ButtonColor, 1, 20));
 		panelCiudad.add(btnListCiudad);
-		
+
 		btnListCiudad.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseEntered(MouseEvent e) {
 				btnListCiudad.setBackground(HoverEffevtColor);
-				btnListCiudad.setBorder(new CompoundBorder(new RoundedBorder(HoverEffevtColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+				btnListCiudad.setBorder(
+						new CompoundBorder(new RoundedBorder(HoverEffevtColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 
 			}
+
 			@Override
 			public void mouseExited(MouseEvent e) {
 				btnListCiudad.setBackground(ButtonColor);
-				btnListCiudad.setBorder(new CompoundBorder(new RoundedBorder(ButtonColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+				btnListCiudad.setBorder(
+						new CompoundBorder(new RoundedBorder(ButtonColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 			}
 		});
-		
+
 		listaEstadisticabttn = new JButton("List. Estadistica");
 		listaEstadisticabttn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -471,16 +508,19 @@ public class Principal extends JFrame {
 			@Override
 			public void mouseEntered(MouseEvent e) {
 				listaEstadisticabttn.setBackground(HoverEffevtColor);
-				listaEstadisticabttn.setBorder(new CompoundBorder(new RoundedBorder(HoverEffevtColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+				listaEstadisticabttn.setBorder(
+						new CompoundBorder(new RoundedBorder(HoverEffevtColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 
 			}
+
 			@Override
 			public void mouseExited(MouseEvent e) {
 				listaEstadisticabttn.setBackground(ButtonColor);
-				listaEstadisticabttn.setBorder(new CompoundBorder(new RoundedBorder(ButtonColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+				listaEstadisticabttn.setBorder(
+						new CompoundBorder(new RoundedBorder(ButtonColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 			}
 		});
-		
+
 		RegJuegobttn = new JButton("Reg. Juego");
 		RegJuegobttn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -495,21 +535,24 @@ public class Principal extends JFrame {
 		RegJuegobttn.setFont(new Font("Tahoma", Font.BOLD, 20));
 		RegJuegobttn.setBorder(new RoundedBorder(ButtonColor, 1, 20));
 		panelJuego.add(RegJuegobttn);
-		
+
 		RegJuegobttn.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseEntered(MouseEvent e) {
 				RegJuegobttn.setBackground(HoverEffevtColor);
-				RegJuegobttn.setBorder(new CompoundBorder(new RoundedBorder(HoverEffevtColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+				RegJuegobttn.setBorder(
+						new CompoundBorder(new RoundedBorder(HoverEffevtColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 
 			}
+
 			@Override
 			public void mouseExited(MouseEvent e) {
 				RegJuegobttn.setBackground(ButtonColor);
-				RegJuegobttn.setBorder(new CompoundBorder(new RoundedBorder(ButtonColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+				RegJuegobttn.setBorder(
+						new CompoundBorder(new RoundedBorder(ButtonColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 			}
 		});
-		
+
 		listJuegobttn = new JButton("List. Juego");
 		listJuegobttn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -529,42 +572,43 @@ public class Principal extends JFrame {
 			@Override
 			public void mouseEntered(MouseEvent e) {
 				listJuegobttn.setBackground(HoverEffevtColor);
-				listJuegobttn.setBorder(new CompoundBorder(new RoundedBorder(HoverEffevtColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+				listJuegobttn.setBorder(
+						new CompoundBorder(new RoundedBorder(HoverEffevtColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 
 			}
+
 			@Override
 			public void mouseExited(MouseEvent e) {
 				listJuegobttn.setBackground(ButtonColor);
-				listJuegobttn.setBorder(new CompoundBorder(new RoundedBorder(ButtonColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
+				listJuegobttn.setBorder(
+						new CompoundBorder(new RoundedBorder(ButtonColor, 1, 20), new EmptyBorder(0, 10, 0, 10)));
 			}
 		});
-		
-		// Agregar imagen basketprowhite
-        JLabel lblImagen = new JLabel();
-        try {
-            ImageIcon icon = new ImageIcon(getClass().getResource("/BasketProWhite.jpg"));
-            // Redimensionar la imagen para ocupar todo el espacio disponible
-            Image img = icon.getImage();
-            // Calcular el espacio disponible: ancho del panel - ancho del PanelPrincipal
-            int anchoDisponible = dim.width - 300; // 1558 píxeles
-            int altoDisponible = 1045; // altura completa del panel
-            Image imgScale = img.getScaledInstance(anchoDisponible, altoDisponible, Image.SCALE_SMOOTH);
-            ImageIcon scaledIcon = new ImageIcon(imgScale);
-            lblImagen.setIcon(scaledIcon);
-        } catch (Exception e) {
-            lblImagen.setText("Imagen no encontrada");
-            lblImagen.setHorizontalAlignment(SwingConstants.CENTER);
-            lblImagen.setFont(new Font("Tahoma", Font.BOLD, 24));
-            lblImagen.setForeground(TextColor);
-        }
-        // Posicionar la imagen para que ocupe todo el espacio a la derecha del PanelPrincipal
-        lblImagen.setBounds(250, 0, 1558, 1045);
-        lblImagen.setHorizontalAlignment(SwingConstants.CENTER);
-        lblImagen.setVerticalAlignment(SwingConstants.CENTER);
-        panel.add(lblImagen);
+
+		JLabel lblImagen = new JLabel();
+		try {
+			ImageIcon icon = new ImageIcon(getClass().getResource("/BasketProWhite.jpg"));
+
+			Image img = icon.getImage();
+			int anchoDisponible = dim.width - 300;
+			int altoDisponible = 1045;
+			Image imgScale = img.getScaledInstance(anchoDisponible, altoDisponible, Image.SCALE_SMOOTH);
+			ImageIcon scaledIcon = new ImageIcon(imgScale);
+			lblImagen.setIcon(scaledIcon);
+		} catch (Exception e) {
+			lblImagen.setText("Imagen no encontrada");
+			lblImagen.setHorizontalAlignment(SwingConstants.CENTER);
+			lblImagen.setFont(new Font("Tahoma", Font.BOLD, 24));
+			lblImagen.setForeground(TextColor);
+		}
+		lblImagen.setBounds(250, 0, 1558, 1045);
+		lblImagen.setHorizontalAlignment(SwingConstants.CENTER);
+		lblImagen.setVerticalAlignment(SwingConstants.CENTER);
+		panel.add(lblImagen);
 	}
 
-	private void abrirMenuJugador(MoveToXY panelJugadorShow, MoveToXY panelEquipoHide, MoveToXY panelJuegoHide, MoveToXY panelEstadisticaHide, MoveToXY panelCiudadHide) {
+	private void abrirMenuJugador(MoveToXY panelJugadorShow, MoveToXY panelEquipoHide, MoveToXY panelJuegoHide,
+			MoveToXY panelEstadisticaHide, MoveToXY panelCiudadHide) {
 		regJugadobttn.setVisible(true);
 		listarJugadoresbttn.setVisible(true);
 		panelJugadores.setVisible(true);
@@ -579,15 +623,15 @@ public class Principal extends JFrame {
 		menuEstadistica = false;
 		menuJuego = false;
 	}
-	
+
 	private void cerrarMenuJugador(MoveToXY panelJugadorHide) {
 		menuJugador = false;
 		regJugadobttn.setVisible(false);
 		listarJugadoresbttn.setVisible(false);
 		panelJugadorHide.start();
-		
+
 		Timer timer = new Timer(750, new ActionListener() {
-			
+
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				panelJugadores.setVisible(false);
@@ -597,8 +641,9 @@ public class Principal extends JFrame {
 		timer.setRepeats(false);
 		timer.start();
 	}
-	
-	private void abrirMenuEquipos(MoveToXY panelJugadorhide, MoveToXY panelEquipoShow, MoveToXY panelJuegoHide, MoveToXY panelEstadisticaHide, MoveToXY panelCiudadShow) {
+
+	private void abrirMenuEquipos(MoveToXY panelJugadorhide, MoveToXY panelEquipoShow, MoveToXY panelJuegoHide,
+			MoveToXY panelEstadisticaHide, MoveToXY panelCiudadShow) {
 		btnListEquipo.setVisible(true);
 		panelEquipos.setVisible(true);
 		panelEquipoShow.start();
@@ -612,13 +657,13 @@ public class Principal extends JFrame {
 		menuEstadistica = false;
 		menuJuego = false;
 	}
-	
+
 	private void cerrarMenuEquipo(MoveToXY panelEquipoHide) {
 		menuEquipo = false;
 		panelEquipoHide.start();
-		
+
 		Timer timer = new Timer(750, new ActionListener() {
-			
+
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				panelEquipos.setVisible(false);
@@ -629,8 +674,9 @@ public class Principal extends JFrame {
 		timer.setRepeats(false);
 		timer.start();
 	}
-	
-	private void abrirMenuEstadistica(MoveToXY panelJugadorhide, MoveToXY panelEquipoHide, MoveToXY panelJuegoHide, MoveToXY panelEstadisticaShow, MoveToXY panelCiudadShow) {
+
+	private void abrirMenuEstadistica(MoveToXY panelJugadorhide, MoveToXY panelEquipoHide, MoveToXY panelJuegoHide,
+			MoveToXY panelEstadisticaShow, MoveToXY panelCiudadShow) {
 		listaEstadisticabttn.setVisible(true);
 		panelEstadistica.setVisible(true);
 		panelEstadisticaShow.start();
@@ -644,13 +690,13 @@ public class Principal extends JFrame {
 		menuJuego = false;
 		menuJugador = false;
 	}
-	
+
 	private void cerrarMenuEstadistica(MoveToXY panelEstadisticaHide) {
 		menuEstadistica = false;
 		panelEstadisticaHide.start();
-		
+
 		Timer timer = new Timer(750, new ActionListener() {
-			
+
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				panelEstadistica.setVisible(false);
@@ -661,8 +707,9 @@ public class Principal extends JFrame {
 		timer.setRepeats(false);
 		timer.start();
 	}
-	
-	private void abrirMenuJuego(MoveToXY panelJugadorHide, MoveToXY panelEquipoHide, MoveToXY panelJuegoShow, MoveToXY panelEstadisticaHide, MoveToXY panelCiudadHide) {
+
+	private void abrirMenuJuego(MoveToXY panelJugadorHide, MoveToXY panelEquipoHide, MoveToXY panelJuegoShow,
+			MoveToXY panelEstadisticaHide, MoveToXY panelCiudadHide) {
 		RegJuegobttn.setVisible(true);
 		listJuegobttn.setVisible(true);
 		panelJuego.setVisible(true);
@@ -677,27 +724,28 @@ public class Principal extends JFrame {
 		menuJuego = true;
 		menuJugador = false;
 	}
-	
+
 	private void cerrarMenuJuego(MoveToXY panelJuegoHide) {
 		menuJuego = false;
 		panelJuegoHide.start();
-		
+
 		Timer timer = new Timer(750, new ActionListener() {
-			
+
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// TODO Auto-generated method stub
+
 				panelJuego.setVisible(false);
 				RegJuegobttn.setVisible(false);
 				listJuegobttn.setVisible(false);
-				((Timer)e.getSource()).stop();
+				((Timer) e.getSource()).stop();
 			}
 		});
 		timer.setRepeats(false);
 		timer.start();
 	}
-	
-	private void abrirMenuCiudad(MoveToXY panelJugadorHide, MoveToXY panelEquipoHide, MoveToXY panelJuegoHide, MoveToXY panelEstadisticaHide, MoveToXY panelCiudadShow) {
+
+	private void abrirMenuCiudad(MoveToXY panelJugadorHide, MoveToXY panelEquipoHide, MoveToXY panelJuegoHide,
+			MoveToXY panelEstadisticaHide, MoveToXY panelCiudadShow) {
 		btnListCiudad.setVisible(true);
 		panelCiudad.setVisible(true);
 		panelCiudadShow.start();
@@ -711,19 +759,19 @@ public class Principal extends JFrame {
 		menuJuego = false;
 		menuJugador = false;
 	}
-	
+
 	private void cerrarMenuCiudad(MoveToXY panelCiudadHide) {
 		menuCiudad = false;
 		panelCiudadHide.start();
-		
+
 		Timer timer = new Timer(750, new ActionListener() {
-			
+
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// TODO Auto-generated method stub
+
 				panelCiudad.setVisible(false);
 				btnListCiudad.setVisible(false);
-				((Timer)e.getSource()).stop();
+				((Timer) e.getSource()).stop();
 			}
 		});
 		timer.setRepeats(false);

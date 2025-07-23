@@ -50,7 +50,7 @@ public class ListCiudad extends JDialog {
 	private static final Color PrimaryC = new Color(3, 88, 157);
 	private static final Color SecondaryC = new Color(3, 104, 196);
 	private static final Color ThirdC = new Color(247, 251, 255);
-	private static final Color AccentColor = new Color(247, 109, 71); // 255, 150, 95
+	private static final Color AccentColor = new Color(247, 109, 71);
 	private static final Color AccentHoverColor = new Color(255, 136, 73);
 	private static final Color BGC = new Color(236, 240, 241);
 	private static final Color TextColor = new Color(52, 73, 94);
@@ -70,9 +70,6 @@ public class ListCiudad extends JDialog {
 	private boolean isUpdatingRow = false;
 	private int updatingRowIndex = -1;
 
-	/**
-	 * Launch the application.
-	 */
 	public static void main(String[] args) {
 		try {
 			ListCiudad dialog = new ListCiudad();
@@ -83,9 +80,6 @@ public class ListCiudad extends JDialog {
 		}
 	}
 
-	/**
-	 * Create the dialog.
-	 */
 	public ListCiudad() {
 		setUndecorated(true);
 		setBounds(100, 100, 1349, 704);
@@ -108,7 +102,6 @@ public class ListCiudad extends JDialog {
 					String nombreSeleccionado = (String) table.getValueAt(ind, 0);
 					nameCiudad = nombreSeleccionado != null ? nombreSeleccionado.trim() : "";
 
-					// Obtener el código de la ciudad desde la controladora
 					try {
 						Controladora controladora = Controladora.getInstance();
 						for (Ciudad ciudad : controladora.getMisCiudades()) {
@@ -188,31 +181,28 @@ public class ListCiudad extends JDialog {
 		});
 		searchbtn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				String nombre = nametxt.getText().trim(); // Ya tiene trim
+				String nombre = nametxt.getText().trim();
 
 				if (nombre.isEmpty()) {
-					// If search field is empty, load all cities
 					loadCiudad();
 					return;
 				}
 
 				try {
 					Controladora controladora = Controladora.getInstance();
-					controladora.cargarCiudadesFromDB(); // Load all cities
+					controladora.cargarCiudadesFromDB();
 
-					model.setRowCount(0); // Clear table
+					model.setRowCount(0);
 
-					// Filter cities that match the search term
 					for (Ciudad ciudad : controladora.getMisCiudades()) {
 						String nombreCiudad = ciudad.getNombre() != null ? ciudad.getNombre().trim() : "";
 						if (nombreCiudad.toLowerCase().contains(nombre.toLowerCase())) {
-							Object[] row = { nombreCiudad // Usar nombre con trim
+							Object[] row = { nombreCiudad
 							};
 							model.addRow(row);
 						}
 					}
 
-					// Clear search field after search
 					nametxt.setText("");
 				} catch (Exception ex) {
 					JOptionPane.showMessageDialog(ListCiudad.this, "Error al buscar ciudades: " + ex.getMessage(),
@@ -247,7 +237,6 @@ public class ListCiudad extends JDialog {
 		});
 		returnbtn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				// Detener cualquier edición activa PRIMERO
 				if (table.getCellEditor() != null) {
 					table.getCellEditor().cancelCellEditing();
 				}
@@ -274,9 +263,7 @@ public class ListCiudad extends JDialog {
 			public void actionPerformed(ActionEvent e) {
 				if (cod != null && !cod.isEmpty()) {
 					try {
-						// NUEVA VALIDACIÓN: Verificar si la ciudad está relacionada con algún equipo
 						if (ciudadTieneEquiposRelacionados(Integer.parseInt(cod))) {
-							// Obtener los nombres de los equipos relacionados para mostrar en el mensaje
 							java.util.List<String> equiposRelacionados = obtenerEquiposRelacionados(
 									Integer.parseInt(cod));
 
@@ -297,7 +284,6 @@ public class ListCiudad extends JDialog {
 							return;
 						}
 
-						// Si no tiene equipos relacionados, proceder con la confirmación normal
 						int confirm = JOptionPane.showConfirmDialog(ListCiudad.this,
 								"¿Está seguro de eliminar la ciudad '" + nameCiudad + "'?\n\n"
 										+ "Esta acción no se puede deshacer.",
@@ -311,7 +297,7 @@ public class ListCiudad extends JDialog {
 								JOptionPane.showMessageDialog(ListCiudad.this, "Ciudad eliminada correctamente",
 										"Éxito", JOptionPane.INFORMATION_MESSAGE);
 
-								loadCiudad(); // Actualizar la tabla
+								loadCiudad();
 								deletebtn.setEnabled(false);
 								updatebtn.setEnabled(false);
 
@@ -361,7 +347,6 @@ public class ListCiudad extends JDialog {
 		updatebtn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (!isUpdatingRow) {
-					// Modo Actualizar
 					if (cod != null && !cod.isEmpty()) {
 						try {
 							int selectedRow = table.getSelectedRow();
@@ -392,7 +377,6 @@ public class ListCiudad extends JDialog {
 						}
 					}
 				} else {
-					// Modo Guardar Cambios
 					try {
 						if (table.getCellEditor() != null) {
 							table.getCellEditor().stopCellEditing();
@@ -486,7 +470,6 @@ public class ListCiudad extends JDialog {
 		addbtn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (!isAddingNewRow) {
-					// Modo Agregar - código sin cambios
 					Object[] newRow = { "Nueva Ciudad" };
 					model.addRow(newRow);
 
@@ -504,7 +487,6 @@ public class ListCiudad extends JDialog {
 					searchbtn.setEnabled(false);
 
 				} else {
-					// Modo Guardar
 					try {
 						if (table.getCellEditor() != null) {
 							table.getCellEditor().stopCellEditing();
@@ -552,30 +534,25 @@ public class ListCiudad extends JDialog {
 	}
 
 	public void loadCiudad() {
-		// Detener cualquier edición activa PRIMERO
 		if (table.getCellEditor() != null) {
 			table.getCellEditor().cancelCellEditing();
 		}
 
-		// Limpiar editores antes de cargar datos
 		table.setDefaultEditor(Object.class, null);
 		if (table.getColumnCount() > 0) {
 			table.getColumnModel().getColumn(0).setCellEditor(null);
 		}
 
-		model.setRowCount(0); // Limpiar la tabla
+		model.setRowCount(0);
 
 		try {
 			Controladora controladora = Controladora.getInstance();
-			controladora.cargarCiudadesFromDB(); // Load data from database
-
-			System.out.println("Loading ciudades - found: " + controladora.getMisCiudades().size()); // Debug
+			controladora.cargarCiudadesFromDB();
 
 			for (Ciudad ciudad : controladora.getMisCiudades()) {
 				String nombreCiudad = ciudad.getNombre() != null ? ciudad.getNombre().trim() : "";
-				System.out.println("Adding ciudad to table: Name=" + nombreCiudad); // Debug
 
-				Object[] row = { nombreCiudad // Nombre con trim aplicado
+				Object[] row = { nombreCiudad
 				};
 				model.addRow(row);
 			}
@@ -596,7 +573,6 @@ public class ListCiudad extends JDialog {
 
 	private void makeTableEditable() {
 		try {
-			// Detener cualquier edición activa primero
 			if (table.getCellEditor() != null) {
 				table.getCellEditor().cancelCellEditing();
 			}
@@ -617,7 +593,6 @@ public class ListCiudad extends JDialog {
 
 	private void makeTableEditableForUpdate() {
 		try {
-			// Detener cualquier edición activa primero
 			if (table.getCellEditor() != null) {
 				table.getCellEditor().cancelCellEditing();
 			}
@@ -644,16 +619,13 @@ public class ListCiudad extends JDialog {
 		returnbtn.setText("Retornar");
 		isAddingNewRow = false;
 
-		// IMPORTANTE: Detener cualquier edición activa antes de limpiar editores
 		if (table.getCellEditor() != null) {
 			table.getCellEditor().cancelCellEditing();
 		}
 
-		// Limpiar editores personalizados
 		table.setDefaultEditor(Object.class, null);
 		table.getColumnModel().getColumn(0).setCellEditor(null);
 
-		// Limpiar selección
 		table.clearSelection();
 
 		searchbtn.setEnabled(true);
@@ -662,7 +634,6 @@ public class ListCiudad extends JDialog {
 	}
 
 	private void cancelAddMode() {
-		// Detener edición ANTES de remover la fila
 		if (table.getCellEditor() != null) {
 			table.getCellEditor().cancelCellEditing();
 		}
@@ -680,16 +651,13 @@ public class ListCiudad extends JDialog {
 		isUpdatingRow = false;
 		updatingRowIndex = -1;
 
-		// IMPORTANTE: Detener cualquier edición activa antes de limpiar editores
 		if (table.getCellEditor() != null) {
 			table.getCellEditor().cancelCellEditing();
 		}
 
-		// Limpiar editores personalizados
 		table.setDefaultEditor(Object.class, null);
 		table.getColumnModel().getColumn(0).setCellEditor(null);
 
-		// Limpiar selección
 		table.clearSelection();
 
 		addbtn.setEnabled(true);
@@ -699,7 +667,6 @@ public class ListCiudad extends JDialog {
 	}
 
 	private void cancelUpdateMode() {
-		// Detener edición ANTES de resetear
 		if (table.getCellEditor() != null) {
 			table.getCellEditor().cancelCellEditing();
 		}
@@ -708,12 +675,7 @@ public class ListCiudad extends JDialog {
 		loadCiudad();
 	}
 
-	/**
-	 * Verifica si la ciudad tiene equipos relacionados
-	 */
 	private boolean ciudadTieneEquiposRelacionados(int idCiudad) throws SQLException {
-		// Formatear el ID con ceros a la izquierda para coincidir con el formato de la
-		// BD
 		String idCiudadFormatted = String.format("%02d", idCiudad);
 
 		try (Connection connection = SQLConnection.getConnection();
@@ -730,14 +692,9 @@ public class ListCiudad extends JDialog {
 		return false;
 	}
 
-	/**
-	 * Obtiene la lista de equipos relacionados con la ciudad
-	 */
 	private java.util.List<String> obtenerEquiposRelacionados(int idCiudad) throws SQLException {
 		java.util.List<String> equipos = new ArrayList<>();
 
-		// Formatear el ID con ceros a la izquierda para coincidir con el formato de la
-		// BD
 		String idCiudadFormatted = String.format("%02d", idCiudad);
 
 		try (Connection connection = SQLConnection.getConnection();

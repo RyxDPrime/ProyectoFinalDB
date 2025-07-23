@@ -51,8 +51,6 @@ public class RegJuego extends JDialog {
 	private JSpinner spinner;
 	private JButton regbtn;
 	private JButton returnbtn;
-	
-	// Agregar variable de instancia para almacenar todos los equipos
 	private java.util.List<String> todosLosEquipos = new java.util.ArrayList<>();
 
 	/**
@@ -86,77 +84,75 @@ public class RegJuego extends JDialog {
 			panel.setBounds(0, 0, 450, 382);
 			contentPanel.add(panel, BorderLayout.CENTER);
 			panel.setLayout(null);
-			
+
 			JPanel line = new JPanel();
 			line.setBounds(0, 0, 450, 10);
 			line.setBackground(SecondaryC);
 			panel.add(line);
-			
+
 			JLabel titletxt = new JLabel("Registrar Juego");
 			titletxt.setBounds(111, 16, 210, 41);
 			titletxt.setFont(new Font("Century gothic", Font.BOLD, 24));
 			panel.add(titletxt);
-			
+
 			teamAlabel = new JLabel("Equipo Local:");
 			teamAlabel.setBounds(15, 75, 120, 20);
 			teamAlabel.setFont(new Font("century gothic", Font.BOLD, 16));
 			panel.add(teamAlabel);
-			
+
 			JLabel taemBlabel = new JLabel("Equipo Visitante:");
 			taemBlabel.setFont(new Font("century gothic", Font.BOLD, 16));
 			taemBlabel.setBounds(15, 113, 150, 20);
 			panel.add(taemBlabel);
-			
-			// Modificar los ActionListeners de los ComboBox
+
 			teamAcb = new JComboBox();
 			teamAcb.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					actualizarEquipoB();
 				}
 			});
-			teamAcb.setModel(new DefaultComboBoxModel(new String[] {"<Seleccione>"}));
+			teamAcb.setModel(new DefaultComboBoxModel(new String[] { "<Seleccione>" }));
 			teamAcb.setFont(new Font("century gothic", Font.BOLD, 16));
 			teamAcb.setBounds(150, 73, 164, 20);
 			panel.add(teamAcb);
-			
+
 			teamBcb = new JComboBox();
 			teamBcb.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					actualizarEquipoA();
 				}
 			});
-			teamBcb.setModel(new DefaultComboBoxModel(new String[] {"<Seleccione>"}));
+			teamBcb.setModel(new DefaultComboBoxModel(new String[] { "<Seleccione>" }));
 			teamBcb.setFont(new Font("century Gothic", Font.BOLD, 16));
 			teamBcb.setBounds(150, 111, 164, 20);
 			panel.add(teamBcb);
-			
+
 			desclabel = new JLabel("Descripcion:");
 			desclabel.setFont(new Font("century gothic", Font.BOLD, 16));
 			desclabel.setBounds(15, 151, 164, 20);
 			panel.add(desclabel);
-			
+
 			desctxt = new JTextField();
 			desctxt.setFont(new Font("century gothic", Font.BOLD, 14));
 			desctxt.setBounds(150, 149, 265, 20);
 			panel.add(desctxt);
 			desctxt.setColumns(10);
-			
+
 			JLabel datelabel = new JLabel("Fecha y Hora:");
 			datelabel.setFont(new Font("century gothic", Font.BOLD, 16));
 			datelabel.setBounds(15, 189, 164, 20);
 			panel.add(datelabel);
-			
+
 			spinner = new JSpinner();
 			spinner.setFont(new Font("Century Gothic", Font.PLAIN, 16));
 			spinner.setModel(new SpinnerDateModel(new Date(), null, null, Calendar.MINUTE));
 
-			// Establece el formato de fecha y hora
 			JSpinner.DateEditor editor = new JSpinner.DateEditor(spinner, "dd/MM/yyyy HH:mm");
 			spinner.setEditor(editor);
 
 			spinner.setBounds(150, 187, 210, 20);
 			panel.add(spinner);
-			
+
 			regbtn = new JButton("Registrar");
 			regbtn.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
@@ -170,6 +166,7 @@ public class RegJuego extends JDialog {
 					regbtn.setForeground(Color.white);
 					regbtn.setBorder(new RoundedBorder(new Color(11, 182, 72), 1, 20));
 				}
+
 				@Override
 				public void mouseExited(MouseEvent e) {
 					regbtn.setBorder(new RoundedBorder(SecondaryC, 1, 20));
@@ -183,7 +180,7 @@ public class RegJuego extends JDialog {
 			regbtn.setFont(new Font("century gothic", Font.BOLD, 18));
 			regbtn.setBounds(15, 239, 130, 40);
 			panel.add(regbtn);
-			
+
 			returnbtn = new JButton("Cancelar");
 			returnbtn.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
@@ -197,6 +194,7 @@ public class RegJuego extends JDialog {
 					returnbtn.setForeground(Color.white);
 					returnbtn.setBorder(new RoundedBorder(new Color(167, 34, 34), 1, 20));
 				}
+
 				@Override
 				public void mouseExited(MouseEvent e) {
 					returnbtn.setBorder(new RoundedBorder(SecondaryC, 1, 20));
@@ -210,189 +208,160 @@ public class RegJuego extends JDialog {
 			returnbtn.setFont(new Font("century gothic", Font.BOLD, 18));
 			returnbtn.setBounds(300, 239, 130, 40);
 			panel.add(returnbtn);
-			
+
 			loadEquipos();
 		}
 	}
-	
-	// Modificar el método loadEquipos()
+
 	private void loadEquipos() {
-	    todosLosEquipos.clear();
-	    
-	    try (Connection connection = SQLConnection.getConnection();
-	         Statement stmt = connection.createStatement();
-	         ResultSet rs = stmt.executeQuery("SELECT Nombre_Equipo FROM Equipo ORDER BY Nombre_Equipo")) {
-	        
-	        while (rs.next()) {
-	            todosLosEquipos.add(rs.getString("Nombre_Equipo"));
-	        }
-	    } catch (SQLException e) {
-	        JOptionPane.showMessageDialog(this, 
-	            "Error al cargar equipos: " + e.getMessage(),
-	            "Error", JOptionPane.ERROR_MESSAGE);
-	        e.printStackTrace();
-	    }
-	    
-	    // Cargar inicialmente todos los equipos en ambos ComboBox
-	    actualizarEquipoA();
-	    actualizarEquipoB();
+		todosLosEquipos.clear();
+
+		try (Connection connection = SQLConnection.getConnection();
+				Statement stmt = connection.createStatement();
+				ResultSet rs = stmt.executeQuery("SELECT Nombre_Equipo FROM Equipo ORDER BY Nombre_Equipo")) {
+
+			while (rs.next()) {
+				todosLosEquipos.add(rs.getString("Nombre_Equipo"));
+			}
+		} catch (SQLException e) {
+			JOptionPane.showMessageDialog(this, "Error al cargar equipos: " + e.getMessage(), "Error",
+					JOptionPane.ERROR_MESSAGE);
+			e.printStackTrace();
+		}
+
+		actualizarEquipoA();
+		actualizarEquipoB();
 	}
-	
-	// Reemplazar el método validarEquipos() con estos dos nuevos métodos
+
 	private void actualizarEquipoA() {
-	    String equipoSeleccionadoA = (String) teamAcb.getSelectedItem();
-	    String equipoSeleccionadoB = (String) teamBcb.getSelectedItem();
-	    
-	    DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
-	    model.addElement("<Seleccione>");
-	    
-	    for (String equipo : todosLosEquipos) {
-	        // Agregar todos los equipos excepto el seleccionado en teamB
-	        if (!equipo.equals(equipoSeleccionadoB) || "<Seleccione>".equals(equipoSeleccionadoB)) {
-	            model.addElement(equipo);
-	        }
-	    }
-	    
-	    teamAcb.removeActionListener(teamAcb.getActionListeners()[0]); // Remover listener temporalmente
-	    teamAcb.setModel(model);
-	    if (equipoSeleccionadoA != null && !equipoSeleccionadoA.equals(equipoSeleccionadoB)) {
-	        teamAcb.setSelectedItem(equipoSeleccionadoA);
-	    }
-	    teamAcb.addActionListener(new ActionListener() { // Volver a agregar listener
-	        public void actionPerformed(ActionEvent e) {
-	            actualizarEquipoB();
-	        }
-	    });
+		String equipoSeleccionadoA = (String) teamAcb.getSelectedItem();
+		String equipoSeleccionadoB = (String) teamBcb.getSelectedItem();
+
+		DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
+		model.addElement("<Seleccione>");
+
+		for (String equipo : todosLosEquipos) {
+			if (!equipo.equals(equipoSeleccionadoB) || "<Seleccione>".equals(equipoSeleccionadoB)) {
+				model.addElement(equipo);
+			}
+		}
+
+		teamAcb.removeActionListener(teamAcb.getActionListeners()[0]);
+		teamAcb.setModel(model);
+		if (equipoSeleccionadoA != null && !equipoSeleccionadoA.equals(equipoSeleccionadoB)) {
+			teamAcb.setSelectedItem(equipoSeleccionadoA);
+		}
+		teamAcb.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				actualizarEquipoB();
+			}
+		});
 	}
 
 	private void actualizarEquipoB() {
-	    String equipoSeleccionadoB = (String) teamBcb.getSelectedItem();
-	    String equipoSeleccionadoA = (String) teamAcb.getSelectedItem();
-	    
-	    DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
-	    model.addElement("<Seleccione>");
-	    
-	    for (String equipo : todosLosEquipos) {
-	        // Agregar todos los equipos excepto el seleccionado en teamA
-	        if (!equipo.equals(equipoSeleccionadoA) || "<Seleccione>".equals(equipoSeleccionadoA)) {
-	            model.addElement(equipo);
-	        }
-	    }
-	    
-	    teamBcb.removeActionListener(teamBcb.getActionListeners()[0]); // Remover listener temporalmente
-	    teamBcb.setModel(model);
-	    if (equipoSeleccionadoB != null && !equipoSeleccionadoB.equals(equipoSeleccionadoA)) {
-	        teamBcb.setSelectedItem(equipoSeleccionadoB);
-	    }
-	    teamBcb.addActionListener(new ActionListener() { // Volver a agregar listener
-	        public void actionPerformed(ActionEvent e) {
-	            actualizarEquipoA();
-	        }
-	    });
+		String equipoSeleccionadoB = (String) teamBcb.getSelectedItem();
+		String equipoSeleccionadoA = (String) teamAcb.getSelectedItem();
+
+		DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
+		model.addElement("<Seleccione>");
+
+		for (String equipo : todosLosEquipos) {
+			if (!equipo.equals(equipoSeleccionadoA) || "<Seleccione>".equals(equipoSeleccionadoA)) {
+				model.addElement(equipo);
+			}
+		}
+
+		teamBcb.removeActionListener(teamBcb.getActionListeners()[0]);
+		teamBcb.setModel(model);
+		if (equipoSeleccionadoB != null && !equipoSeleccionadoB.equals(equipoSeleccionadoA)) {
+			teamBcb.setSelectedItem(equipoSeleccionadoB);
+		}
+		teamBcb.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				actualizarEquipoA();
+			}
+		});
 	}
-	
-	// Eliminar los métodos obtenerSiguienteIdJuego() y guardarJuegoEnBD() duplicados
-		// y simplificar el método registrarJuego():
+
 	private void registrarJuego() {
 		try {
-			// Validar que todos los campos estén completos
 			String equipoLocal = (String) teamAcb.getSelectedItem();
 			String equipoVisitante = (String) teamBcb.getSelectedItem();
 			String descripcion = desctxt.getText().trim();
 			Date fechaHora = (Date) spinner.getValue();
-			
-			System.out.println("=== Debug RegJuego ===");
-			System.out.println("Equipo Local seleccionado: '" + equipoLocal + "'");
-			System.out.println("Equipo Visitante seleccionado: '" + equipoVisitante + "'");
-			
+
 			if (equipoLocal == null || equipoLocal.equals("<Seleccione>")) {
-				JOptionPane.showMessageDialog(this, 
-					"Debe seleccionar el equipo local", 
-					"Error", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(this, "Debe seleccionar el equipo local", "Error",
+						JOptionPane.ERROR_MESSAGE);
 				return;
 			}
-			
+
 			if (equipoVisitante == null || equipoVisitante.equals("<Seleccione>")) {
-				JOptionPane.showMessageDialog(this, 
-					"Debe seleccionar el equipo visitante", 
-					"Error", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(this, "Debe seleccionar el equipo visitante", "Error",
+						JOptionPane.ERROR_MESSAGE);
 				return;
 			}
-			
+
 			if (descripcion.isEmpty()) {
-				JOptionPane.showMessageDialog(this, 
-					"Debe ingresar una descripción", 
-					"Error", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(this, "Debe ingresar una descripción", "Error",
+						JOptionPane.ERROR_MESSAGE);
 				return;
 			}
-			
-			// Obtener los IDs de los equipos
+
 			int idEquipoLocal = obtenerIdEquipo(equipoLocal);
 			int idEquipoVisitante = obtenerIdEquipo(equipoVisitante);
-			
-			System.out.println("ID Equipo Local obtenido: " + idEquipoLocal);
-			System.out.println("ID Equipo Visitante obtenido: " + idEquipoVisitante);
-			
+
 			if (idEquipoLocal == -1 || idEquipoVisitante == -1) {
-				JOptionPane.showMessageDialog(this, 
-					"Error al obtener los IDs de los equipos\n" +
-					"Equipo Local ID: " + idEquipoLocal + "\n" +
-					"Equipo Visitante ID: " + idEquipoVisitante, 
-					"Error", JOptionPane.ERROR_MESSAGE);
+				JOptionPane
+						.showMessageDialog(this,
+								"Error al obtener los IDs de los equipos\n" + "Equipo Local ID: " + idEquipoLocal + "\n"
+										+ "Equipo Visitante ID: " + idEquipoVisitante,
+								"Error", JOptionPane.ERROR_MESSAGE);
 				return;
 			}
-			
-			// Crear el objeto Juego - el ID será asignado automáticamente por la Controladora
+
 			Juego nuevoJuego = new Juego(0, descripcion, idEquipoLocal, idEquipoVisitante, fechaHora);
-			
-			System.out.println("Juego creado - Local: " + idEquipoLocal + ", Visitante: " + idEquipoVisitante);
-			
-			// Usar la Controladora para insertar (maneja automáticamente el ID)
+
 			Controladora controladora = Controladora.getInstance();
 			controladora.insertarJuego(nuevoJuego);
-			
-			JOptionPane.showMessageDialog(this, 
-				"Juego registrado exitosamente", 
-				"Éxito", JOptionPane.INFORMATION_MESSAGE);
-			
-			// Limpiar formulario
+
+			JOptionPane.showMessageDialog(this, "Juego registrado exitosamente", "Éxito",
+					JOptionPane.INFORMATION_MESSAGE);
+
 			limpiarFormulario();
-			
+
 		} catch (Exception ex) {
-			JOptionPane.showMessageDialog(this, 
-				"Error al registrar el juego: " + ex.getMessage(), 
-				"Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, "Error al registrar el juego: " + ex.getMessage(), "Error",
+					JOptionPane.ERROR_MESSAGE);
 			ex.printStackTrace();
 		}
 	}
 
-	// Mantener solo este método para obtener el ID del equipo:
 	private int obtenerIdEquipo(String nombreEquipo) {
-	    try (Connection connection = SQLConnection.getConnection();
-	         PreparedStatement stmt = connection.prepareStatement("SELECT IdEquipo FROM Equipo WHERE Nombre_Equipo = ?")) {
-	        
-	        stmt.setString(1, nombreEquipo);
-	        ResultSet rs = stmt.executeQuery();
-	        
-	        if (rs.next()) {
-	            return rs.getInt("IdEquipo");
-	        }
-	        
-	    } catch (SQLException e) {
-	        e.printStackTrace();
-	    }
-	    return -1;
+		try (Connection connection = SQLConnection.getConnection();
+				PreparedStatement stmt = connection
+						.prepareStatement("SELECT IdEquipo FROM Equipo WHERE Nombre_Equipo = ?")) {
+
+			stmt.setString(1, nombreEquipo);
+			ResultSet rs = stmt.executeQuery();
+
+			if (rs.next()) {
+				return rs.getInt("IdEquipo");
+			}
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return -1;
 	}
 
-	// Mantener el método limpiarFormulario():
 	private void limpiarFormulario() {
-	    teamAcb.setSelectedIndex(0);
-	    teamBcb.setSelectedIndex(0);
-	    desctxt.setText("");
-	    spinner.setValue(new Date());
-	    
-	    // Actualizar los ComboBox
-	    actualizarEquipoA();
-	    actualizarEquipoB();
+		teamAcb.setSelectedIndex(0);
+		teamBcb.setSelectedIndex(0);
+		desctxt.setText("");
+		spinner.setValue(new Date());
+
+		actualizarEquipoA();
+		actualizarEquipoB();
 	}
 }
