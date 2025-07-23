@@ -408,6 +408,7 @@ public class ListJuego extends JDialog {
 					DetalleJuego detalle = new DetalleJuego(juegoId);
 					detalle.setLocationRelativeTo(ListJuego.this);
 					detalle.setVisible(true);
+					detalle.setModal(true);
 				} else {
 					JOptionPane.showMessageDialog(ListJuego.this, "Seleccione un juego para ver los detalles",
 							"Sin selección", JOptionPane.WARNING_MESSAGE);
